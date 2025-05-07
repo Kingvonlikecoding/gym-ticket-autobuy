@@ -1,0 +1,11 @@
+[project]
+name = "gymticket"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "playwright>=1.52.0",
+    "pytest>=8.3.5",
+    "pytest-playwright>=0.7.0",
+]
