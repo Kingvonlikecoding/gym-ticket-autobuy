@@ -1,10 +1,11 @@
 import pytest
 import re
 from playwright.sync_api import Page, expect,TimeoutError
+import random
 
 # uv run python -m pytest ./tests/test_buy_ticket.py
 
-def test_basketball(page: Page, config):
+def test_badminton(page: Page, config):
     cfg = config
 
     # Arrange
@@ -21,9 +22,9 @@ def test_basketball(page: Page, config):
     page.wait_for_load_state('load')  # 等待整个页面加载完成
     page.click("div.bh-btn-primary:has-text('粤海校区')")
 
-    # 篮球
-    page.wait_for_selector("img.union-2[src*='eaaf3fd0bf624a328966f987fcd0ac52']", timeout=10000)
-    page.click("img.union-2[src*='eaaf3fd0bf624a328966f987fcd0ac52']")
+    # 羽毛球
+    page.wait_for_selector("img.union-2[src*='317a6df934914473b49996840b305987']", timeout=10000)
+    page.click("img.union-2[src*='317a6df934914473b49996840b305987']")
 
     from datetime import date, timedelta
     today = date.today()
@@ -41,9 +42,9 @@ def test_basketball(page: Page, config):
             page.wait_for_load_state('load')  # 等待整个页面加载完成
             page.click("div.bh-btn-primary:has-text('粤海校区')")
 
-            # 篮球
-            page.wait_for_selector("img.union-2[src*='eaaf3fd0bf624a328966f987fcd0ac52']", timeout=10000)
-            page.click("img.union-2[src*='eaaf3fd0bf624a328966f987fcd0ac52']")
+            # 羽毛球
+            page.wait_for_selector("img.union-2[src*='317a6df934914473b49996840b305987']", timeout=10000)
+            page.click("img.union-2[src*='317a6df934914473b49996840b305987']")
 
         try:
             # 使用 locator.wait_for() 来等待元素可见
@@ -67,9 +68,29 @@ def test_basketball(page: Page, config):
 
     page.click(f"div.element:has-text('{thetime}')")  # 点击时间段
 
-    # 篮球
-    page.wait_for_selector("div.element:has-text('东馆篮球4号场(')", timeout=10000)
-    page.click("div.element:has-text('东馆篮球4号场(')")
+    # 羽毛球
+    available_venue_selector = "div.element:has-text('可预约')"
+
+    # Find all elements that match the selector
+    available_venues = page.locator(available_venue_selector).all()
+
+    # Filter for visible elements
+    visible_available_venues = [
+        venue for venue in available_venues if venue.is_visible()
+    ]
+
+    if not visible_available_venues:
+        raise RuntimeError("无体育场馆了")
+
+    # Select one visible available venue randomly
+    chosen_venue = random.choice(visible_available_venues)
+
+    # Get the text of the chosen venue for logging
+    chosen_venue_text = chosen_venue.text_content()
+    print(f"  Randomly selected venue: '{chosen_venue_text}'. Clicking...")
+
+    # Click the chosen venue
+    chosen_venue.click()
 
     page.click("button.bh-btn.bh-btn-default.bh-btn-large:has-text('提交预约')")
 

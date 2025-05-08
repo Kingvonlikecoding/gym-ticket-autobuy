@@ -1,6 +1,6 @@
 # 项目名称 (请替换为您的项目名称)
 
-这是一个用于自动化抢票的脚本。抢的是第二天自定义时间的的篮球场或健身房。
+这是一个用于自动化抢票的脚本。抢的是第二天自定义时间的的羽毛球场或健身房。
 
 ## 前期准备
 
@@ -39,12 +39,12 @@
     gym_visible.bat
     ```
 
-2.  **运行basketball抢票脚本**: 双击或在终端中运行 `basketball.bat` 或 `basketball_visible.bat`文件。
+2.  **运行baminton抢票脚本**: 双击或在终端中运行 `baminton.bat` 或 `baminton_visible.bat`文件。
 
     ```bash
-    basketball.bat
+    baminton.bat
     # 或者
-    basketball_visible.bat
+    baminton_visible.bat
     ```
 
 3.  **自动化抢票**: 配合windows自带的定时任务功能task scheduler，设置定时任务，实现自动化。
