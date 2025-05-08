@@ -1,7 +1,7 @@
 @echo off
-echo Running pytest tests/test_buy_ticket.py...
+echo Running pytest tests/test_basketball.py...
 
-uv run python -m pytest tests/test_buy_ticket.py
+uv run python -m pytest tests/test_basketball.py
 if %errorlevel% neq 0 (
     echo Tests failed.
 ) else (

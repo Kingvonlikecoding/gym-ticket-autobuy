@@ -25,6 +25,18 @@ if %errorlevel% neq 0 (
 )
 echo Dependencies synchronized.
 
+echo Downloading Playwright browser binaries...
+rem Need to use uv run to execute playwright install within the uv environment
+uv run python -m playwright install
+if %errorlevel% neq 0 (
+    echo Error: Failed to download Playwright browser binaries.
+    echo Please ensure you have curl or wget installed if prompted, or try running "uv run python -m playwright install" manually.
+    pause
+    exit /b 1
+)
+echo Playwright browser binaries downloaded successfully.
+
+
 echo Creating config directory...
 if not exist config mkdir config
 if %errorlevel% neq 0 (
@@ -47,11 +59,13 @@ echo settings.json created.
 echo --- Configuration ---
 set /p username="Enter username: "
 set /p password="Enter password: "
+rem Added prompt for time slot
+set /p time_slot="Enter desired time slot (e.g., 20:00-21:00): "
 
 echo Writing configuration to config\settings.json...
-rem Construct the JSON string. Careful with quotes and batch escaping.
+rem Construct the JSON string including the time_slot.
 rem Using ^" to escape quotes within echo when redirecting is common.
-echo {^"username^": ^"%username%^", ^"password^": ^"%password%^"} > config\settings.json
+echo {^"username^": ^"%username%^", ^"password^": ^"%password%^", ^"time_slot^": ^"%time_slot%^"} > config\settings.json
 if %errorlevel% neq 0 (
     echo Error: Failed to write settings to settings.json.
     pause
