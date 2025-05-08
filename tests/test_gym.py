@@ -13,7 +13,7 @@ def test_gym(page: Page, config):
     # Act_Login
     page.locator("//section//input[@id='username']").fill(cfg['username'])
     page.locator("//section//input[@id='password']").fill(cfg['password'])
-    thetime = cfg['time']
+    thetime = cfg['time_slot']
     page.locator("//section//a[@id='login_submit']").click()
 
 
@@ -28,12 +28,11 @@ def test_gym(page: Page, config):
     from datetime import date, timedelta
     today = date.today()
     tomorrow = today + timedelta(days=1)
-    tomorrow_str = tomorrow.strftime("%Y-%m-%d")  # 输出 "2025-05-08"
+    tomorrow_str = tomorrow.strftime(f"%Y-%m-%d")  # 输出 "2025-05-09"
 
-    target_selector = f"div.element:has-text('{tomorrow_str}')"
+    target_selector = "//label/div[contains(.,'" + tomorrow_str + "')]"  # 使用XPath选择器来匹配包含日期的元素
     max_attempts = 10  # 总共尝试次数：初始页面加载 + 9次刷新 = 10次
     wait_timeout_seconds = 10 # 每次尝试等待元素出现的最大秒数
-    print(f"Attempting to find and click date '{tomorrow_str}' with selector '{target_selector}'")
 
     for attempt in range(max_attempts):
 
@@ -45,17 +44,6 @@ def test_gym(page: Page, config):
             # 健身房
             page.wait_for_selector("img.union-2[src*='6cf6b63b970a4f4b87193d799d8092c7']", timeout=10000)
             page.click("img.union-2[src*='6cf6b63b970a4f4b87193d799d8092c7']")
-
-            from datetime import date, timedelta
-            today = date.today()
-            tomorrow = today + timedelta(days=1)
-            tomorrow_str = tomorrow.strftime("%Y-%m-%d")  # 输出 "2025-05-08"
-
-            target_selector = f"div.element:has-text('{tomorrow_str}')"
-            max_attempts = 10  # 总共尝试次数：初始页面加载 + 9次刷新 = 10次
-            wait_timeout_seconds = 10 # 每次尝试等待元素出现的最大秒数
-            print(f"Attempting to find and click date '{tomorrow_str}' with selector '{target_selector}'")
-
 
         try:
             # 使用 locator.wait_for() 来等待元素可见

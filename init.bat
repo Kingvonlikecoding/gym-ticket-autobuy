@@ -1,6 +1,31 @@
 @echo off
 echo --- Initializing Project ---
 
+setlocal enabledelayedexpansion
+
+for %%f in (*.bat) do (
+    if not "%%f"=="init.bat" (
+        echo Processing %%f...
+        
+        rem 创建临时文件
+        > temp.txt (
+            echo REM filepath: %~dp0%%f
+            echo @echo off
+            echo cd /d %%~dp0
+            
+            rem 从第4行开始复制原文件的内容
+            for /f "skip=3 delims=" %%i in (%%f) do (
+                echo %%i
+            )
+        )
+        
+        rem 替换原文件
+        move /y temp.txt %%f
+    )
+)
+
+echo All .bat files have been updated!
+
 echo Checking for uv...
 where uv >nul 2>nul
 if %errorlevel% neq 0 (

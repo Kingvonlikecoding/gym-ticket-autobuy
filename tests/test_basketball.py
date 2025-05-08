@@ -1,6 +1,5 @@
 import pytest
 import re
-import json
 from playwright.sync_api import Page, expect,TimeoutError
 
 # uv run python -m pytest ./tests/test_buy_ticket.py
@@ -14,7 +13,7 @@ def test_basketball(page: Page, config):
     # Act_Login
     page.locator("//section//input[@id='username']").fill(cfg['username'])
     page.locator("//section//input[@id='password']").fill(cfg['password'])
-    thetime = cfg['time']
+    thetime = cfg['time_slot']
     page.locator("//section//a[@id='login_submit']").click()
 
 
@@ -29,12 +28,11 @@ def test_basketball(page: Page, config):
     from datetime import date, timedelta
     today = date.today()
     tomorrow = today + timedelta(days=1)
-    tomorrow_str = tomorrow.strftime("%Y-%m-%d")  # 输出 "2025-05-08"
+    tomorrow_str = tomorrow.strftime(f"%Y-%m-%d")  # 输出 "2025-05-08"
 
-    target_selector = f"div.element:has-text('{tomorrow_str}')"
+    target_selector = "//label/div[contains(.,'" + tomorrow_str + "')]"  # 使用XPath选择器来匹配包含日期的元素
     max_attempts = 10  # 总共尝试次数：初始页面加载 + 9次刷新 = 10次
     wait_timeout_seconds = 10 # 每次尝试等待元素出现的最大秒数
-    print(f"Attempting to find and click date '{tomorrow_str}' with selector '{target_selector}'")
 
     for attempt in range(max_attempts):
 
@@ -46,17 +44,6 @@ def test_basketball(page: Page, config):
             # 篮球
             page.wait_for_selector("img.union-2[src*='eaaf3fd0bf624a328966f987fcd0ac52']", timeout=10000)
             page.click("img.union-2[src*='eaaf3fd0bf624a328966f987fcd0ac52']")
-
-            from datetime import date, timedelta
-            today = date.today()
-            tomorrow = today + timedelta(days=1)
-            tomorrow_str = tomorrow.strftime("%Y-%m-%d")  # 输出 "2025-05-08"
-
-            target_selector = f"div.element:has-text('{tomorrow_str}')"
-            max_attempts = 10  # 总共尝试次数：初始页面加载 + 9次刷新 = 10次
-            wait_timeout_seconds = 10 # 每次尝试等待元素出现的最大秒数
-            print(f"Attempting to find and click date '{tomorrow_str}' with selector '{target_selector}'")
-
 
         try:
             # 使用 locator.wait_for() 来等待元素可见
