@@ -1,6 +1,6 @@
-# 项目名称 (请替换为您的项目名称)
+# 自动化抢票的脚本
 
-这是一个用于自动化抢票的脚本。抢的是第二天自定义时间的的羽毛球场或健身房。
+这是一个用于windows自动化抢票的脚本。抢的是第二天自定义时间的的羽毛球场或健身房。
 
 ## 前期准备
 
@@ -21,9 +21,8 @@
 
 3.  **初始化项目**: 运行初始化脚本进行一次性设置账号，密码，购票时间。
 
-    ```bash
-    init.bat
-    ```
+    打开 init.bat
+    
     **注意**: 如需初始化 或 修改账号，密码，购票时间，请运行，否则不需要运行。
 
 ## 如何使用
@@ -33,19 +32,15 @@
 
 1.  **运行gym抢票脚本**: 双击或在终端中运行 `gym.bat` 或 `gym_visible.bat`文件。
 
-    ```bash
-    gym.bat
-    # 或者
-    gym_visible.bat
-    ```
+    打开
+    gym.bat 或者 gym_visible.bat
+
 
 2.  **运行baminton抢票脚本**: 双击或在终端中运行 `baminton.bat` 或 `baminton_visible.bat`文件。
 
-    ```bash
-    baminton.bat
-    # 或者
-    baminton_visible.bat
-    ```
+    打开
+    baminton.bat 或者 baminton_visible.bat
+
 
 3.  **自动化抢票**: 配合windows自带的定时任务功能task scheduler，设置定时任务，实现自动化。
 
@@ -55,5 +50,7 @@
 
 * 请确保您的校园网络连接稳定
 * 请确保您的体育馆账户有余额
-
+* 请确保有票
+* 修改账号，密码，购票时间，请运行init.bat
+* 脚本运行过程中请勿关闭，运行就是因为等待放票
 
