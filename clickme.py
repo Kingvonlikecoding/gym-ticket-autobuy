@@ -26,27 +26,16 @@ def check_configuration():
 
 def check_dependencies():
     """检查并安装依赖项"""
-    # 设置pip使用清华镜像
-    try:
-        subprocess.run(['pip', 'config', 'set', 'global.index-url', 'https://pypi.tuna.tsinghua.edu.cn/simple'], check=False)
-        print("Successfully set pip mirror to TUNA")
-    except Exception as e:
-        print(f"Warning: Failed to set pip mirror: {e}")
-
     # 安装 uv
     try:
         subprocess.run(['pip', 'install', 'uv', '-i', 'https://pypi.tuna.tsinghua.edu.cn/simple'], check=False)
     except Exception as e:
         print(f"Warning: Failed to install uv: {e}")
 
-    # 初始化 uv 并设置镜像
     try:
         subprocess.run(['uv', 'init'], check=False)
-        # 设置 uv 使用清华镜像
-        subprocess.run(['uv', 'pip', 'config', 'set', 'global.index-url', 'https://pypi.tuna.tsinghua.edu.cn/simple'], check=False)
-        print("Successfully set uv mirror to TUNA")
-    except Exception as e:
-        print(f"Warning: Failed to initialize uv or set mirror: {e}")
+    except:
+        pass
 
     try:
         subprocess.run(['uv', 'venv'], check=False)
