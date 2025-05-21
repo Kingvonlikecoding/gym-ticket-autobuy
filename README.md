@@ -1,6 +1,15 @@
 # 自动化抢票的脚本
 
-这是一个用于自动化抢票的脚本。
+### 包含两个脚本：
+
+1.`clickme.py`:
+
+用于手动抢票以及配置
+
+2.`for_scheduler.py`:
+
+相当于`clickme.py`的精简版只能抢票，用于与windows自带的定时任务功能task scheduler配合，实现明天自动抢票
+
 
 ## 前期准备
 
@@ -9,13 +18,11 @@
 1.  **Python**: 确保你已经安装了 Python 3.10 或更高版本 ，并且Python在系统的 PATH 环境变量中
 
 ## 如何使用
+1. **clickme.py**
+>运行`clickme.py`文件（如提示以什么方式打开，则以python打开），将显示操作界面
 
-
-
-
-3.  **自动化抢票**: 配合windows自带的定时任务功能task scheduler，设置定时任务，创建任务选择for_scheduler.py即可实现自动化。
-
-脚本将会开始执行抢票流程。
+2.  **for_scheduler.py**: 
+>配合windows自带的定时任务功能task scheduler（或者其他定时执行任务的软件），设置定时任务，创建任务选择`for_scheduler.py`即可实现自动化。
 
 ## 注意事项
 

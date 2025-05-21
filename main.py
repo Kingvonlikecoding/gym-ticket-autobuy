@@ -36,106 +36,40 @@ class App:
         self.load_settings()
         logger.info("GUI initialized successfully")
 
-    def validate_date(self, date):
-        """Validate date input"""
-        if date.lower() not in ['today', 'tomorrow']:
-            raise ValueError("日期必须是 'today' 或 'tomorrow'")
-        return True
-
-    def validate_time_slot(self, time_slot):
-        """Validate time slot format"""
-        import re
-        pattern = r'^([01]?[0-9]|2[0-3]):[0-5][0-9]-([01]?[0-9]|2[0-3]):[0-5][0-9]$'
-        if not re.match(pattern, time_slot):
-            raise ValueError("时间格式必须是 'HH:MM-HH:MM'")
-        start, end = time_slot.split('-')
-        if start >= end:
-            raise ValueError("开始时间必须早于结束时间")
-        return True
-
-    def validate_venue(self, venue):
-        """Validate venue type"""
-        if venue.upper() not in ['A', 'B', 'C']:
-            raise ValueError("场馆类型必须是 'A'、'B' 或 'C'")
-        return True
-
-    def validate_court(self, court):
-        """Validate court selection"""
-        if court.lower() not in ['in', 'out']:
-            raise ValueError("场地选择必须是 'in' 或 'out'")
-        return True
-
-    def validate_viewable(self, viewable):
-        """Validate browser visibility setting"""
-        if viewable.lower() not in ['yes', 'no']:
-            raise ValueError("显示浏览器选项必须是 'yes' 或 'no'")
-        return True
-
-    def validate_settings(self):
-        """Validate all settings"""
-        try:
-            # 验证账号信息
-            username = self.account_entries['username'].get().strip()
-            password = self.account_entries['password'].get().strip()
-            pay_pass = self.account_entries['pay_pass'].get().strip()
-            
-            if not username or not password or not pay_pass:
-                raise ValueError("账号信息不能为空")
-
-            # 验证预约设置
-            settings_validators = {
-                'date': self.validate_date,
-                'time_slot': self.validate_time_slot,
-                'venue': self.validate_venue,
-                'court': self.validate_court,
-                'viewable': self.validate_viewable
-            }
-
-            for key, validator in settings_validators.items():
-                value = self.settings_entries[key].get().strip()
-                if not value:
-                    raise ValueError(f"{key} 不能为空")
-                validator(value)
-
-            return True
-
-        except ValueError as e:
-            messagebox.showerror("验证错误", str(e))
-            logger.error(f"设置验证失败: {str(e)}")
-            return False
-
     def load_settings(self):
         """加载配置"""
         try:
             logger.info("loading configuration...")
-            if not os.path.exists('config/settings.json'):
-                logger.warning("未找到配置文件")
-                return
                 
             with open('config/settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                logger.debug(f"读取到配置: {settings}")
+                logger.debug(f"read the config: {settings}")
                 
             # 加载账号信息
             for key, entry in self.account_entries.items():
                 if key in settings:
-                    entry.delete(0, tk.END)
+                    # 清除输入框中原有的内容；
+                    # 0 表示从第一个字符开始；
+                    # tk.END 表示到最后一个字符结束
+                    entry.delete(0, tk.END) 
+                    # 把配置文件中的值插入到输入框中；
+                    # 0 表示从最前面插入；
                     entry.insert(0, settings[key])
-                    logger.debug(f"已加载账号配置: {key}")
+                    logger.debug(f"logged the account config: {key}")
             
             # 加载预约设置
             for key, entry in self.settings_entries.items():
                 if key in settings:
                     entry.delete(0, tk.END)
                     entry.insert(0, settings[key])
-                    logger.debug(f"已加载预约配置: {key}")
+                    logger.debug(f"logged the appointment config: {key}")
                     
             logger.info("configuration loaded successfully")
             
         except json.JSONDecodeError:
-            logger.error("配置文件格式错误")
+            logger.error("the configuration file is not valid JSON")
         except Exception as e:
-            logger.error(f"加载配置时发生错误: {str(e)}")
+            logger.error(f"error in loading config: {str(e)}")
 
     def save_account(self):
         """保存账号信息"""
@@ -177,40 +111,44 @@ class App:
 
     def save_settings(self):
         """保存预约设置"""
-        try:
-            # 首先验证所有设置
-            if not self.validate_settings():
-                return
-                
+        try:                
             # 读取现有配置
             settings = {}
             if os.path.exists('config/settings.json'):
                 with open('config/settings.json', 'r', encoding='utf-8') as f:
                     settings = json.load(f)
             
-            # 获取并规范化预约设置
-            booking_settings = {}
-            for key, entry in self.settings_entries.items():
-                value = entry.get().strip()
-                if key == 'venue':
-                    value = value.upper()
-                elif key in ['court', 'viewable']:
-                    value = value.lower()
-                booking_settings[key] = value
+            # 获取并验证预约设置
+            date = self.settings_entries['date'].get().strip()
+            time_slot = self.settings_entries['time_slot'].get().strip()
+            venue = self.settings_entries['venue'].get().strip()
+            court = self.settings_entries['court'].get().strip()
+            viewable = self.settings_entries['viewable'].get().strip()
             
-            # 更新设置
-            settings.update(booking_settings)
+            if not date or not time_slot or not venue or not viewable:
+                raise ValueError("除了场地选择其他所有输入框不能为空")
+            
+            # 更新预约设置
+            appointment_settings = {
+                'date': date,
+                'time_slot': time_slot,
+                'venue': venue,
+                'court': court,
+                'viewable': viewable,
+                'flag': 'null'
+            }
+            settings.update(appointment_settings)
             
             # 保存更新后的配置
             os.makedirs('config', exist_ok=True)
             with open('config/settings.json', 'w', encoding='utf-8') as f:
                 json.dump(settings, f, indent=4)
-                
-            logger.info("预约设置保存成功")
+            
+            logger.info("appointment settings saved")
             messagebox.showinfo("成功", "预约设置保存成功！")
             
         except Exception as e:
-            logger.error(f"保存预约设置失败: {str(e)}")
+            logger.error(f"failed to appointment settings: {str(e)}")
             messagebox.showerror("错误", f"保存预约设置失败：{str(e)}")
 
     def clear_cookies(self):
@@ -224,10 +162,6 @@ class App:
             messagebox.showinfo("成功", "已清除登录状态！")
         except Exception as e:
             messagebox.showerror("错误", f"清除登录状态失败：{str(e)}")
-
-    def show_help(self, title, message):
-        """显示帮助信息"""
-        messagebox.showinfo(title, message)
 
     def setup_account_tab(self):
         """账号设置标签页"""
@@ -326,7 +260,7 @@ class App:
         # 在右侧添加使用说明
         ttk.Label(right_frame, text="使用说明", font=('Helvetica', 10, 'bold')).pack(pady=(0, 5))
         usage_text = """
-            1. 除了场地选择其他所有字段都必须填写
+            1. 除了场地选择其他所有输入框都必须填写
 
             2. 场馆类型说明：
             A - 健身房
@@ -350,35 +284,32 @@ class App:
         self.notebook.add(run_frame, text="运行")
         
         # 创建日志文本框
-        self.log_text = tk.Text(run_frame, height=15, width=60)
+        self.log_text = tk.Text(run_frame, height=15, width=80)
         self.log_text.pack(padx=5, pady=5)
+        # 属于 App 类的一个成员变量，而不是局部变量
         
         # 运行按钮
         ttk.Button(run_frame, text="开始运行", command=self.run_script).pack(pady=5)
 
     def run_script(self):
         """运行脚本"""
-        try:
-            # 验证设置
-            if not self.validate_settings():
-                return
-                
-            # 清空日志显示
-            self.log_text.delete(1.0, tk.END)
-            
-            # 获取设置
+        try:        
+            # 获取设置（是否要显示浏览器）
             with open('config/settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
             
             # 根据viewable设置运行命令
             cmd = ['uv', 'run', 'python', '-m', 'pytest', './tests/test_main.py']
             if settings.get('viewable', 'yes').lower() == 'yes':
-                cmd.append('--headed')
+                cmd.append('--headed') 
             
-            # 添加时间戳到日志
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            self.log_text.insert(tk.END, f"=== 开始运行 [{timestamp}] ===\n\n")
+            # 清空日志文本框
+            # 1.0：第 1 行（从 1 开始计数）第 0 个字符（即行首）开始
+            self.log_text.delete(1.0, tk.END)
+            self.log_text.insert(tk.END, f"starting the program: {' '.join(cmd)}\n\n")
+            self.log_text.update()
             
+            # 使用Popen执行命令并实时获取输出,run是阻塞的
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
@@ -386,36 +317,30 @@ class App:
                 text=True
             )
             
-            # 实时显示输出
+            # 读取并显示输出
             while True:
                 output = process.stdout.readline()
+                # process.poll()是 subprocess.Popen 对象的一个方法，用于 检查子进程是否已经结束
                 if output == '' and process.poll() is not None:
                     break
                 if output:
                     self.log_text.insert(tk.END, output)
-                    self.log_text.see(tk.END)
-                    self.root.update()
+                    self.log_text.see(tk.END)  # 自动滚动到最新输出
+                    self.log_text.update()
             
-            return_code = process.poll()
-            
-            # 添加完成状态到日志
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            status = "成功" if return_code == 0 else "失败"
-            self.log_text.insert(tk.END, f"\n=== 运行{status} [{timestamp}] ===\n")
-            
-            if return_code == 0:
-                logger.info("脚本运行成功")
-                messagebox.showinfo("成功", "脚本运行完成！")
+            # 获取命令执行结果
+            returncode = process.wait()
+            if returncode == 0:
+                self.log_text.insert(tk.END, "\ncomplete successfully\n")
             else:
-                error_output = process.stderr.read()
-                logger.error(f"脚本运行失败: {error_output}")
-                messagebox.showerror("错误", "脚本运行失败！请查看日志获取详细信息。")
+                self.log_text.insert(tk.END, "\nfailed\n")
                 
         except Exception as e:
-            logger.error(f"运行脚本失败: {str(e)}")
+            logger.error(f"error: {str(e)}")
             messagebox.showerror("错误", f"运行脚本失败：{str(e)}")
+            self.log_text.insert(tk.END, f"\nerror: {str(e)}\n")
 
 if __name__ == "__main__":
     root = tk.Tk()
     app = App(root)
-    root.mainloop()
+    root.mainloop() # “无限循环”，持续监听和处理用户与界面的交互事件
