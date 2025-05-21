@@ -49,7 +49,7 @@ def check_dependencies():
     
     # 安装 playwright（使用镜像下载 pip 包）
     try:
-        subprocess.run(['uv', 'run', 'python', '-m', 'playwright', 'install', '--mirror', 'https://npmmirror.com/mirrors'], check=False)
+        subprocess.run(['playwright', 'install'], check=False)
     except Exception as e:
         print(f"Warning: Failed to install playwright: {e}")
         
@@ -61,9 +61,8 @@ def main():
     current_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(current_dir)
 
-    check_configuration()
-
-    check_dependencies()
+    # check_configuration()
+    # check_dependencies()
 
 
     # 运行主程序
