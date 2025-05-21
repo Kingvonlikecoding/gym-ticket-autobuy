@@ -18,8 +18,7 @@ def check_configuration():
             "time_slot": "20:00-21:00",
             "venue": "C",
             "court": "out",
-            "viewable": "yes",
-            "flag": "new"
+            "viewable": "yes"
         }
         with open('config/settings.json', 'w', encoding='utf-8') as f:
             json.dump(default_settings, f, indent=4)
@@ -64,17 +63,8 @@ def main():
 
     check_configuration()
 
-    # 读取 flag
-    with open('./config/settings.json', 'r', encoding='utf-8') as f:
-        settings = json.load(f)
+    check_dependencies()
 
-    flag = settings.get("flag")
-
-    if flag=='new':
-        check_dependencies()
-        settings["flag"] = "used"
-        with open('./config/settings.json', 'w', encoding='utf-8') as f:
-            json.dump(settings, f, indent=4, ensure_ascii=False)
 
     # 运行主程序
     subprocess.run(['uv', 'run', 'python', 'main.py'], check=True)
