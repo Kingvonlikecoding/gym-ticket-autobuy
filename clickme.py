@@ -49,6 +49,16 @@ def check_dependencies():
     except Exception as e:
         print(f"Warning: Failed to sync dependencies: {e}")
     
+    try:
+        subprocess.run(['pip', 'install', 'pytest-playwright'], check=False)
+    except Exception as e:
+        pass
+
+    try:
+        subprocess.run(['pip', 'install', 'playwright'], check=False)
+    except Exception as e:
+        pass
+
     # 安装 playwright（使用镜像下载 pip 包）
     try:
         subprocess.run(['playwright', 'install'], check=False)
@@ -65,7 +75,6 @@ def main():
 
     check_configuration()
     check_dependencies()
-
 
     # 运行主程序
     subprocess.run(['uv', 'run', 'python', 'main.py'], check=True)
