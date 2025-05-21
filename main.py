@@ -15,6 +15,7 @@ class App:
         self.root.geometry("900x650")  # 窗口大小
         
         # 创建一个标签页控件
+        # 布局控件的三大主要方法：pack()，grid()，place()
         self.notebook = ttk.Notebook(root) 
         # expand=True	如果可用空间大于控件所需空间，则扩展控件以填充空间
         # fill='both'	在水平和垂直方向都填充可用空间
@@ -22,7 +23,7 @@ class App:
         # pady=5	控件与父容器之间上下留白 5 像素
         self.notebook.pack(expand=True, fill='both', padx=10, pady=5)
         
-        # 初始化数据存储
+        # 输入框的内容存储
         self.account_entries = {}
         self.settings_entries = {}
         
@@ -33,7 +34,7 @@ class App:
         
         # 加载配置
         self.load_settings()
-        logger.info("界面初始化完成")
+        logger.info("GUI initialized successfully")
 
     def validate_date(self, date):
         """Validate date input"""
@@ -106,7 +107,7 @@ class App:
     def load_settings(self):
         """加载配置"""
         try:
-            logger.info("正在加载配置文件...")
+            logger.info("loading configuration...")
             if not os.path.exists('config/settings.json'):
                 logger.warning("未找到配置文件")
                 return
@@ -129,7 +130,7 @@ class App:
                     entry.insert(0, settings[key])
                     logger.debug(f"已加载预约配置: {key}")
                     
-            logger.info("配置加载完成")
+            logger.info("configuration loaded successfully")
             
         except json.JSONDecodeError:
             logger.error("配置文件格式错误")
@@ -147,6 +148,7 @@ class App:
             
             # 获取并验证账号设置
             username = self.account_entries['username'].get().strip()
+            # .get() 是 Tkinter 控件的方法，用于获取控件中的文本
             password = self.account_entries['password'].get().strip()
             pay_pass = self.account_entries['pay_pass'].get().strip()
             
@@ -166,11 +168,11 @@ class App:
             with open('config/settings.json', 'w', encoding='utf-8') as f:
                 json.dump(settings, f, indent=4)
             
-            logger.info("账号信息保存成功")
+            logger.info("account saved")
             messagebox.showinfo("成功", "账号信息保存成功！")
             
         except Exception as e:
-            logger.error(f"保存账号信息失败: {str(e)}")
+            logger.error(f"failed to save account: {str(e)}")
             messagebox.showerror("错误", f"保存账号信息失败：{str(e)}")
 
     def save_settings(self):
@@ -229,13 +231,13 @@ class App:
 
     def setup_account_tab(self):
         """账号设置标签页"""
-        # ttk.Frame 容器，用于存放“账号设置”标签页的内容
+        # ttk.Frame 容器（标签页实例）
         account_frame = ttk.Frame(self.notebook)
         self.notebook.add(account_frame, text="账号设置")
 
-        # 创建主框架
+        # 创建主框架（account_frame的child，但是是控件而不是容器）
         main_frame = ttk.LabelFrame(account_frame, text="账号信息")
-        main_frame.pack(expand=True, fill='both', padx=10, pady=5)
+        main_frame.pack(expand=True, fill='both', padx=20, pady=20)
 
         # 账号设置
         settings = {
@@ -245,21 +247,23 @@ class App:
         }
 
         self.account_entries = {}
-        row = 0
         for key, (label, _) in settings.items():
             frame = ttk.Frame(main_frame)
-            frame.pack(fill='x', pady=5)
+            frame.pack(fill='x', pady=5) # fill='x' 表示这个容器会水平填满可用空间，所以下一个frame自动换行
             
-            ttk.Label(frame, text=label, width=10).pack(side='left', padx=5)
-            entry = ttk.Entry(frame, width=30)
+            ttk.Label(frame, text=label, width=10).pack(side='left', padx=5) 
+            entry = ttk.Entry(frame, width=30) # 输入框
             if key in ["password", "pay_pass"]:
                 entry.config(show="*")
             entry.pack(side='left', padx=5)
             self.account_entries[key] = entry
 
+        # justify='left'控件内部文本的对齐方式
+        # side='left'控件本身在父容器中的排列方向
+
         # 按钮框架
         button_frame = ttk.Frame(main_frame)
-        button_frame.pack(pady=20)
+        button_frame.pack(pady=20) #默认居中
         
         # 保存和清除cookie按钮
         ttk.Button(button_frame, text="保存账号信息", command=self.save_account).pack(side='left', padx=10)
@@ -267,10 +271,9 @@ class App:
 
         # 说明文本
         note_text = """
-注意事项：
-1. 更换账号时请点击"清除登录状态"，否则可能会使用之前账号的登录状态
-2. 密码和支付密码会以密文显示
-3. 所有信息都会保存在本地，不会上传到网络
+            注意事项：
+            1. 更换账号时请点击"清除登录状态"，否则可能自动登录之前的账号
+            2. 所有信息都会保存在本地settings.json文件中，不会上传到网络，请勿分享此文件
         """
         ttk.Label(main_frame, text=note_text, justify='left').pack(pady=20)
 
@@ -279,9 +282,9 @@ class App:
         settings_frame = ttk.Frame(self.notebook)
         self.notebook.add(settings_frame, text="预约设置")
         
-        # 创建主框架，用于水平分割设置和说明
+        # 创建主框架
         main_frame = ttk.Frame(settings_frame)
-        main_frame.pack(expand=True, fill='both', padx=10, pady=5)
+        main_frame.pack(expand=True, fill='both', padx=20, pady=20)
         
         # 创建左侧设置框架
         left_frame = ttk.Frame(main_frame)
@@ -305,52 +308,39 @@ class App:
         for key, (label, hint) in settings.items():
             frame = ttk.Frame(left_frame)
             frame.grid(row=row, column=0, sticky='ew', pady=2)
+            # 控件在单元格内水平扩展（e = east，w = west）
             
-            ttk.Label(frame, text=label).pack(side='left', padx=(0, 5))
+            ttk.Label(frame, text=label, width=10).pack(side='left', padx=(0, 5))
             
             entry = ttk.Entry(frame, width=20)
             entry.pack(side='left', padx=5)
             self.settings_entries[key] = entry
             
-            if key == "venue":
-                ttk.Button(
-                    frame, 
-                    text="?", 
-                    width=2,
-                    command=lambda: self.show_help(
-                        "场馆说明", 
-                        "A: 健身房\nB: 羽毛球场\nC: 篮球场"
-                    )
-                ).pack(side='left', padx=5)
-            elif key == "court":
-                self.court_label = ttk.Label(frame, text="（仅篮球场需要：in表示室内，out表示天台）")
-                self.court_label.pack(side='left', padx=5)
-            elif hint:
-                ttk.Label(frame, text=hint).pack(side='left', padx=5)
+            ttk.Label(frame, text=hint).pack(side='left', padx=5)
             
             row += 1
         
-        # 添加保存按钮
+        # 添加保存按钮，因为没加sticky参数所以居中
         ttk.Button(left_frame, text="保存预约设置", command=self.save_settings).grid(row=row, column=0, pady=20)
         
         # 在右侧添加使用说明
         ttk.Label(right_frame, text="使用说明", font=('Helvetica', 10, 'bold')).pack(pady=(0, 5))
         usage_text = """
-1. 所有字段都必须填写
+            1. 除了场地选择其他所有字段都必须填写
 
-2. 场馆类型说明：
-   A - 健身房
-   B - 羽毛球场
-   C - 篮球场
+            2. 场馆类型说明：
+            A - 健身房
+            B - 羽毛球场
+            C - 篮球场
 
-3. 场地选择说明：
-   - 仅在选择篮球场(C)时需要
-   - in  - 室内篮球场
-   - out - 天台篮球场
+            3. 场地选择说明：
+             仅在选择篮球场(C)时需要
+            - in  - 室内篮球场
+            - out - 天台篮球场
 
-4. 显示浏览器：
-   yes - 显示操作过程
-   no  - 后台运行
+            4. 显示浏览器：
+            yes - 显示操作过程
+            no  - 后台运行
         """
         ttk.Label(right_frame, text=usage_text, justify='left').pack()
 
