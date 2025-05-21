@@ -26,23 +26,32 @@ def check_configuration():
 
 def check_dependencies():
     """检查并安装依赖项"""
+    # 安装 uv
     try:
-        # 安装 uv
-        subprocess.run(['pip', 'install', 'uv'])
+        subprocess.run(['pip', 'install', 'uv'], check=False)
+    except Exception as e:
+        print(f"Warning: Failed to install uv: {e}")
 
-        # 初始化 uv
-        subprocess.run(['uv', 'init'])
-        subprocess.run(['uv', 'venv'])
-        
-        # 同步项目依赖
-        subprocess.run(['uv', 'sync'])
-        
-        # 安装 playwright
-        subprocess.run(['uv', 'run', 'python', '-m', 'playwright', 'install'], check=True)
+    # 初始化 uv
+    try:
+        subprocess.run(['uv', 'init'], check=False)
+    except Exception as e:
+        print(f"Warning: Failed to initialize uv: {e}")
 
-        return True
-    except:
-        return False
+    try:
+        subprocess.run(['uv', 'venv'], check=False)
+    except Exception as e:
+        print(f"Warning: Failed to create venv: {e}")
+    
+    # 同步项目依赖
+    try:
+        subprocess.run(['uv', 'sync'], check=False)
+    except Exception as e:
+        print(f"Warning: Failed to sync dependencies: {e}")
+    
+    # 安装 playwright
+    subprocess.run(['uv', 'run', 'python', '-m', 'playwright', 'install'], check=True)
+
 
 
 def main():
