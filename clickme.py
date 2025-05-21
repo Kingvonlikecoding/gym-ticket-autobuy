@@ -8,6 +8,8 @@ def check_configuration():
     os.makedirs('report', exist_ok=True)
     os.makedirs('logs', exist_ok=True)
 
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
     # 创建默认配置文件
     if not os.path.exists('config/settings.json'):
         default_settings = {
@@ -61,8 +63,8 @@ def main():
     current_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(current_dir)
 
-    # check_configuration()
-    # check_dependencies()
+    check_configuration()
+    check_dependencies()
 
 
     # 运行主程序
