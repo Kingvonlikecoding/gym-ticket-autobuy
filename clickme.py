@@ -26,31 +26,46 @@ def check_configuration():
 
 def check_dependencies():
     """检查并安装依赖项"""
+    # 设置pip使用清华镜像
+    try:
+        subprocess.run(['pip', 'config', 'set', 'global.index-url', 'https://pypi.tuna.tsinghua.edu.cn/simple'], check=False)
+        print("Successfully set pip mirror to TUNA")
+    except Exception as e:
+        print(f"Warning: Failed to set pip mirror: {e}")
+
     # 安装 uv
     try:
-        subprocess.run(['pip', 'install', 'uv'], check=False)
+        subprocess.run(['pip', 'install', 'uv', '-i', 'https://pypi.tuna.tsinghua.edu.cn/simple'], check=False)
     except Exception as e:
         print(f"Warning: Failed to install uv: {e}")
 
-    # 初始化 uv
+    # 初始化 uv 并设置镜像
     try:
         subprocess.run(['uv', 'init'], check=False)
+        # 设置 uv 使用清华镜像
+        subprocess.run(['uv', 'pip', 'config', 'set', 'global.index-url', 'https://pypi.tuna.tsinghua.edu.cn/simple'], check=False)
+        print("Successfully set uv mirror to TUNA")
     except Exception as e:
-        print(f"Warning: Failed to initialize uv: {e}")
+        print(f"Warning: Failed to initialize uv or set mirror: {e}")
 
     try:
         subprocess.run(['uv', 'venv'], check=False)
     except Exception as e:
         print(f"Warning: Failed to create venv: {e}")
     
-    # 同步项目依赖
+    # 同步项目依赖（使用镜像）
     try:
-        subprocess.run(['uv', 'sync'], check=False)
+        subprocess.run(['uv', 'sync', '--index-url', 'https://pypi.tuna.tsinghua.edu.cn/simple'], check=False)
     except Exception as e:
         print(f"Warning: Failed to sync dependencies: {e}")
     
-    # 安装 playwright
-    subprocess.run(['uv', 'run', 'python', '-m', 'playwright', 'install'], check=True)
+    # 安装 playwright（使用镜像下载 pip 包）
+    try:
+        subprocess.run(['uv', 'run', 'python', '-m', 'playwright', 'install', '--mirror', 'https://npmmirror.com/mirrors'], check=False)
+    except Exception as e:
+        print(f"Warning: Failed to install playwright: {e}")
+        
+    print("Dependencies installation completed")
 
 
 
