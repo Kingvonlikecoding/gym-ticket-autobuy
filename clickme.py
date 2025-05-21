@@ -28,14 +28,14 @@ def check_dependencies():
     """检查并安装依赖项"""
     try:
         # 安装 uv
-        subprocess.run(['pip', 'install', 'uv'], check=True)
+        subprocess.run(['pip', 'install', 'uv'])
 
         # 初始化 uv
-        subprocess.run(['uv', 'init'], check=True)
-        subprocess.run(['uv', 'venv'], check=True)
+        subprocess.run(['uv', 'init'])
+        subprocess.run(['uv', 'venv'])
         
         # 同步项目依赖
-        subprocess.run(['uv', 'sync'], check=True)
+        subprocess.run(['uv', 'sync'])
         
         # 安装 playwright
         subprocess.run(['uv', 'run', 'python', '-m', 'playwright', 'install'], check=True)
