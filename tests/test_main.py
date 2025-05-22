@@ -20,7 +20,7 @@ def test_gym(page: Page, config):
     (ticket_page
         .select_campus()
         .select_venue(cfg['venue'])
-        .select_date(cfg['date'], cfg['venue'], wait_timeout_seconds=int(cfg['wait_timeout_seconds']))
+        .select_date(cfg['date'], cfg['venue'], wait_timeout_seconds=float(cfg['wait_timeout_seconds']))
         .select_time_slot(cfg['time_slot'])
         .select_specific_venue(cfg['venue'], cfg.get('court'))
         .submit_booking()
