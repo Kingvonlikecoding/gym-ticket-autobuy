@@ -30,7 +30,7 @@ class TicketPage:
         self.page.click(f"img.union-2[src*='{image_id}']")
         return self
 
-    def select_date(self, da_te: str, venue_type: str,max_attempts=50, wait_timeout_seconds=5):
+    def select_date(self, da_te: str, venue_type: str, wait_timeout_seconds: float, max_attempts=100):
         """选择日期（今天或明天）"""
         today = date.today().strftime("%Y-%m-%d")
         tomorrow = (date.today() + timedelta(days=1)).strftime("%Y-%m-%d")

@@ -26,6 +26,7 @@ class App:
         # 输入框的内容存储
         self.account_entries = {}
         self.settings_entries = {}
+        self.advanced_settings_entries = {}
         
         # 初始化页面为3个标签页
         self.setup_account_tab()
@@ -43,7 +44,6 @@ class App:
                 
             with open('config/settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                logger.debug(f"read the config: {settings}")
                 
             # 加载账号信息
             for key, entry in self.account_entries.items():
@@ -55,14 +55,18 @@ class App:
                     # 把配置文件中的值插入到输入框中；
                     # 0 表示从最前面插入；
                     entry.insert(0, settings[key])
-                    logger.debug(f"logged the account config: {key}")
             
             # 加载预约设置
             for key, entry in self.settings_entries.items():
                 if key in settings:
                     entry.delete(0, tk.END)
                     entry.insert(0, settings[key])
-                    logger.debug(f"logged the appointment config: {key}")
+
+            # 加载预约高级设置
+            for key, entry in self.advanced_settings_entries.items():
+                if key in settings:
+                    entry.delete(0, tk.END)
+                    entry.insert(0, settings[key])
                     
             logger.info("configuration loaded successfully")
             
@@ -123,9 +127,12 @@ class App:
             time_slot = self.settings_entries['time_slot'].get().strip()
             venue = self.settings_entries['venue'].get().strip()
             court = self.settings_entries['court'].get().strip()
-            viewable = self.settings_entries['viewable'].get().strip()
+
+            # 高级设置
+            viewable = self.advanced_settings_entries['viewable'].get().strip()
+            wait_timeout_seconds = self.advanced_settings_entries['wait_timeout_seconds'].get().strip()
             
-            if not date or not time_slot or not venue or not viewable:
+            if not date or not time_slot or not venue or not viewable or not wait_timeout_seconds:
                 raise ValueError("除了场地选择其他所有输入框不能为空")
             
             # 更新预约设置
@@ -135,7 +142,7 @@ class App:
                 'venue': venue,
                 'court': court,
                 'viewable': viewable,
-                'flag': 'null'
+                'wait_timeout_seconds': wait_timeout_seconds
             }
             settings.update(appointment_settings)
             
@@ -233,9 +240,8 @@ class App:
             "date": ("预约日期", "(today/tomorrow)"),
             "time_slot": ("时间段", "(如:21:00-22:00)"),
             "venue": ("场馆类型", "(A/B/C)"),
-            "court": ("场地选择", "(in/out)"),
-            "viewable": ("显示浏览器", "(yes/no)")
-        }
+            "court": ("场地选择", "(in/out)")
+            }
         
         self.settings_entries = {}
         row = 0
@@ -253,7 +259,34 @@ class App:
             ttk.Label(frame, text=hint).pack(side='left', padx=5)
             
             row += 1
-        
+
+        # 高级选项输入框
+        adsettings={
+            "viewable": ("显示浏览器", "(yes/no)"),
+            "wait_timeout_seconds": ("刷新间隔", "(如1.5秒)")
+        }
+        self.advanced_settings_entries={}
+
+        row+=10
+        frame = ttk.Frame(left_frame)
+        frame.grid(row=row, column=0, sticky='ew', pady=10)
+        ttk.Label(frame, text="高级选项", font=('Helvetica', 10, 'bold') ,width=15).pack(side='left', padx=(0,10))
+
+        row += 1
+        for key, (label, hint) in adsettings.items():
+            frame = ttk.Frame(left_frame)
+            frame.grid(row=row, column=0, sticky='ew', pady=2)
+            
+            ttk.Label(frame, text=label, width=10).pack(side='left', padx=(0, 5))
+            
+            entry = ttk.Entry(frame, width=20)
+            entry.pack(side='left', padx=5)
+            self.advanced_settings_entries[key] = entry
+            
+            ttk.Label(frame, text=hint).pack(side='left', padx=5)
+            row += 1
+
+
         # 添加保存按钮，因为没加sticky参数所以居中
         ttk.Button(left_frame, text="保存预约设置", command=self.save_settings).grid(row=row, column=0, pady=20)
         
@@ -272,9 +305,19 @@ class App:
             - in  - 室内篮球场
             - out - 天台篮球场
 
-            4. 显示浏览器：
+            ------高级设置------
+
+            1. 显示浏览器：
             yes - 显示操作过程
             no  - 后台运行
+
+            2. 刷新间隔：
+            刷新在 即将放 明天的票 时触发
+            ，间隔越小，刷新速度越快，但
+            是有可能网速跟不上导致失败
+
+            默认1.5秒，如果网络速度较慢
+            ，失败了，可设置大一点
         """
         ttk.Label(right_frame, text=usage_text, justify='left').pack()
 

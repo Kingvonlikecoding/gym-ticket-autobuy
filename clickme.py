@@ -22,7 +22,8 @@ def check_configuration():
             "time_slot": "20:00-21:00",
             "venue": "C",
             "court": "out",
-            "viewable": "yes"
+            "viewable": "yes",
+            "wait_timeout_seconds": "1.5"
         }
         with open('config/settings.json', 'w', encoding='utf-8') as f:
             json.dump(default_settings, f, indent=4)
