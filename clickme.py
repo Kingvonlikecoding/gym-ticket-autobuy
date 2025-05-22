@@ -23,15 +23,17 @@ def check_configuration():
             "venue": "C",
             "court": "out",
             "viewable": "yes",
-            "wait_timeout_seconds": "1.5"
+            "wait_timeout_seconds": "1.5",
+            "count": 0
         }
         with open('config/settings.json', 'w', encoding='utf-8') as f:
             json.dump(default_settings, f, indent=4)
 
 def check_dependencies():
     """检查并安装依赖项"""
-    with open('count.json', 'r') as f:
-        count = json.load(f)['count']
+    with open('config/settings.json', 'r') as f:
+        settings = json.load(f)
+    count=int(settings['count'])
     if count<4:
         count=0
         # 安装 uv
@@ -66,8 +68,9 @@ def check_dependencies():
             subprocess.run([python_path, '-m', 'playwright', 'install', 'chromium', '--with-deps'], env=env, check=True)
             print("Playwright installation completed")
             count+=1
-            with open('count.json', 'w') as f:
-                json.dump({"count": count}, f)
+            settings['count']=count
+            with open('config/settings.json', 'w') as f:
+                json.dump(settings, f, indent=4)
 
         except Exception as e:
             logger.info("playwright installation failed: {e}")
