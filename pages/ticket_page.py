@@ -30,21 +30,27 @@ class TicketPage:
         self.page.click(f"img.union-2[src*='{image_id}']")
         return self
 
-    def select_date(self, da_te: str, max_attempts=10, wait_timeout_seconds=10):
+    def select_date(self, da_te: str, venue_type: str,max_attempts=50, wait_timeout_seconds=5):
         """选择日期（今天或明天）"""
         today = date.today().strftime("%Y-%m-%d")
         tomorrow = (date.today() + timedelta(days=1)).strftime("%Y-%m-%d")
+        dajiba= (date.today() + timedelta(days=2)).strftime("%Y-%m-%d") # 用来测试
         if da_te=='today':
             da_te = today
-        else:
+        elif da_te=='tomorrow':
             da_te = tomorrow
+        else:
+            da_te = dajiba
         target_selector = f"//label/div[contains(.,'{da_te}')]"
 
         for attempt in range(max_attempts):
             if attempt > 0:
                 self.page.reload()
+                self.page.wait_for_load_state('networkidle')
+                self.page.wait_for_load_state('domcontentloaded')
+                self.page.wait_for_load_state('load')
                 self.select_campus()
-                self.select_venue(self.current_venue_type)
+                self.select_venue(venue_type)
 
             try:
                 date_locator = self.page.locator(target_selector)
@@ -53,6 +59,7 @@ class TicketPage:
                 return self
             except TimeoutError:
                 if attempt >= max_attempts - 1:
+                    logger.info(f"时间未到或没票了: Failed to find date '{da_te}' after {max_attempts} attempts.")
                     raise RuntimeError(f"时间未到或没票了: Failed to find and click date '{da_te}' after {max_attempts} attempts.")
         return self
 
@@ -68,9 +75,10 @@ class TicketPage:
             self.page.wait_for_selector("div.element:has-text('一楼健身房(')", timeout=10000)
             self.page.click("div.element:has-text('一楼健身房(')")
         elif venue_type == 'B':  # 羽毛球
-            available_venues = self.page.locator("div.element:has-text('可预约')").all()
+            available_venues = self.page.locator("//label/div[contains(.,'可预约') and contains(.,'羽毛球场')]").all()
             visible_venues = [v for v in available_venues if v.is_visible()]
             if not visible_venues:
+                logger.info("no venues available in the timeslot")
                 raise RuntimeError("无体育场馆了")
             chosen_venue = random.choice(visible_venues)
             logger.info(f"随机选择场地: '{chosen_venue.text_content()}'")

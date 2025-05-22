@@ -284,7 +284,7 @@ class App:
         self.notebook.add(run_frame, text="运行")
         
         # 创建日志文本框
-        self.log_text = tk.Text(run_frame, height=15, width=80)
+        self.log_text = tk.Text(run_frame, height=20, width=100)
         self.log_text.pack(padx=5, pady=5)
         # 属于 App 类的一个成员变量，而不是局部变量
         

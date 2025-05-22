@@ -92,11 +92,10 @@ class LoginPage:
             self.wait_for_page_ready()
             
             if self.is_logged_in():
-                logger.info("使用已保存的Cookie成功登录")
                 return self
 
         # Cookie登录失败，使用账号密码登录
-        logger.info("Cookie登录失败，使用账号密码登录")
+        logger.info("can't  load cookies, try to login with username and password")
         self.navigate()
         
         # 等待登录表单元素可见
@@ -114,9 +113,9 @@ class LoginPage:
         self.wait_for_page_ready()
         
         if self.is_logged_in():
-            logger.info("账号密码登录成功，保存登录状态")
+            logger.info("login success, system have saved cookies")
             self.save_cookies()
         else:
-            logger.error("登录失败")
+            logger.error("failed to login")
         
         return self
