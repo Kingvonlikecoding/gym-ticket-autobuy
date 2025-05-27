@@ -89,7 +89,7 @@ def main():
     stdout=subprocess.DEVNULL,  # 将子进程的标准输出（stdout）重定向到“空设备”，即丢弃所有输出
     stderr=subprocess.DEVNULL, # 错误输出（stderr）
     stdin=subprocess.DEVNULL, # 输入（stdin）
-    start_new_session=True  # 使子进程独立于父进程所在的进程组和会话
+    start_new_session=True  # 使子进程独立于父进程所在的进程组和会话（不完全独立）
     )
 
 
