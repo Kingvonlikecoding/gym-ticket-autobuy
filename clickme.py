@@ -23,7 +23,7 @@ def check_configuration():
             "venue": "C",
             "court": "out",
             "viewable": "yes",
-            "wait_timeout_seconds": "1.5",
+            "wait_timeout_seconds": "2",
             "count": 0
         }
         with open('config/settings.json', 'w', encoding='utf-8') as f:
@@ -38,7 +38,7 @@ def check_dependencies():
         count=0
         # 安装 uv
         try:
-            subprocess.run(['pip', 'install', 'uv', '-i', 'https://pypi.tuna.tsinghua.edu.cn/simple'], check=True)
+            subprocess.run(['pip', 'install', 'uv'], check=True)
             count+=1
         except Exception as e:
             logger.info("uv  installation failed: {e}")
@@ -51,21 +51,21 @@ def check_dependencies():
         
         # 同步项目依赖（使用镜像）
         try:
-            subprocess.run(['uv', 'sync', '--index-url', 'https://pypi.tuna.tsinghua.edu.cn/simple'], check=True)
+            subprocess.run(['uv', 'sync'], check=True)
             count+=1
         except Exception as e:
             logger.info("uv sync failed: {e}")
 
-        python_path = r'.venv\Scripts\python.exe'
+        # python_path = r'.venv\Scripts\python.exe'
 
         # 安装 playwright（使用镜像下载 pip 包）
         try:
             # 设置环境变量使用镜像
-            env = os.environ.copy()
-            env['PLAYWRIGHT_DOWNLOAD_HOST'] = 'https://npmmirror.com/mirrors/playwright'
+            # env = os.environ.copy()
             
             # 安装浏览器
-            subprocess.run([python_path, '-m', 'playwright', 'install', 'chromium', '--with-deps'], env=env, check=True)
+            # subprocess.run([python_path, '-m', 'playwright', 'install', 'chromium', '--with-deps'], env=env, check=True)
+            subprocess.run(['uv', 'run', 'playwright', 'install', 'chromium', '--with-deps'], check=True)
             print("Playwright installation completed")
             count+=1
             settings['count']=count
