@@ -37,7 +37,7 @@ def check_dependencies():
     if count<4:
         count=0
         try:
-            subprocess.run(['pipx', 'install', 'uv'], check=True)
+            subprocess.run(['pip', 'install', 'uv'], check=True)
             count+=1
             logger.info("uv  installed successfully")
         except Exception as e:

@@ -8,6 +8,7 @@ wheels/
 config/
 logs/
 report/
+.pytest_cache/
 
 # Virtual environments
 .venv
