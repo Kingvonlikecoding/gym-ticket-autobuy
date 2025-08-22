@@ -1,4 +1,7 @@
 from playwright.sync_api import Page
+from utils.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 class PayPage:
     def __init__(self, page: Page):
@@ -26,4 +29,9 @@ class PayPage:
             self.page.locator(f".key-{digit}").click()
         
         self.page.locator(".next-button-max").click()
-        return self
+
+        if self.page.locator("text=返回").is_visible():
+            logger.error("pay failed  支付失败")
+            return False
+
+        logger.info("pay success  支付成功")

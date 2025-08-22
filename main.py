@@ -353,37 +353,40 @@ class App:
             self.log_text.delete(1.0, tk.END)
             self.log_text.insert(tk.END, f"starting the program: {' '.join(cmd)}\n\n")
             self.log_text.update()
+
+            logger.info(f"running command: {' '.join(cmd)}")
             
             # 使用Popen执行命令并实时获取输出,run是阻塞的
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True
+                text=True,
+                bufsize=1  # 行缓冲
             )
             
-            # 读取并显示输出
-            while True:
-                output = process.stdout.readline()
-                # process.poll()是 subprocess.Popen 对象的一个方法，用于 检查子进程是否已经结束
-                if output == '' and process.poll() is not None:
-                    break
-                if output:
-                    self.log_text.insert(tk.END, output)
-                    self.log_text.see(tk.END)  # 自动滚动到最新输出
-                    self.log_text.update()
-            
-            # 获取命令执行结果
-            returncode = process.wait()
-            if returncode == 0:
-                self.log_text.insert(tk.END, "\ncomplete successfully\n")
-            else:
-                self.log_text.insert(tk.END, "\nfailed\n")
+            capture_log = False
+            while process.poll() is None:
+                # 读取输出
+                for line in process.stdout:
+                    # 开始捕获日志的标记
+                    if "Captured log call" in line:
+                        capture_log = True
+                        continue
+                    if capture_log:
+                        # 结束捕获日志的标记
+                        if "===" in line:
+                            capture_log = False
+                            continue
+                        if capture_log:
+                            self.log_text.insert(tk.END, line)
+                            self.log_text.see(tk.END)
+                            self.log_text.update()
                 
         except Exception as e:
-            logger.error(f"error: {str(e)}")
-            messagebox.showerror("错误", f"运行脚本失败：{str(e)}")
-            self.log_text.insert(tk.END, f"\nerror: {str(e)}\n")
+            logger.error(f"{' '.join(cmd)} run error: {str(e)}")
+            messagebox.showerror("错误", f"运行脚本{' '.join(cmd)}失败：{str(e)}")
+            self.log_text.insert(tk.END, f"\n{' '.join(cmd)} run error: {str(e)}\n")
 
 if __name__ == "__main__":
     root = tk.Tk()

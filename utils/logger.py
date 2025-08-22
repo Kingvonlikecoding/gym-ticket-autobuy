@@ -21,7 +21,10 @@ def setup_logger(name):
     
     # 创建文件处理器
     os.makedirs('logs', exist_ok=True)
-    file_name = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())+'.log'
+    if name!='__main__':
+        file_name = 'pytest - ' + time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())+'.log'
+    else:
+        file_name = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())+'.log'
     file_handler = logging.FileHandler(f'logs/{file_name}', encoding='utf-8')
     file_handler.setLevel(logging.INFO)
     

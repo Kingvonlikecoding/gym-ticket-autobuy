@@ -18,15 +18,25 @@ class LoginPage:
 
     def wait_for_page_ready(self):
         """等待页面完全加载并准备就绪"""
-        self.page.wait_for_load_state('networkidle')
-        self.page.wait_for_load_state('domcontentloaded')
-        self.page.wait_for_load_state('load')
-        return self
+        try:
+            self.page.wait_for_load_state('networkidle')
+            self.page.wait_for_load_state('domcontentloaded')
+            self.page.wait_for_load_state('load')
+            logger.info("Page is ready.")
+            return self
+        except Exception as e:
+            logger.error(f"failed to wait for page ready: {str(e)}")
+            return self
 
     def navigate(self):
         """导航到登录页面"""
-        self.page.goto("https://ehall.szu.edu.cn/qljfwapp/sys/lwSzuCgyy/index.do#/sportVenue")
+        try:
+            self.page.goto("https://ehall.szu.edu.cn/qljfwapp/sys/lwSzuCgyy/index.do#/sportVenue")
+        except:
+            logger.error("Failed to navigate to the login page.")
+            raise Exception("Failed to navigate to the login page.")
         self.wait_for_page_ready()
+        logger.info("Navigated to the login page successfully.")
         return self
 
     def save_cookies(self):
@@ -72,8 +82,10 @@ class LoginPage:
                             localStorage.setItem(key, value);
                         }
                     }''', storage)
+            logger.info("Cookies and localStorage loaded successfully.")
             return True
         except (FileNotFoundError, json.JSONDecodeError):
+            logger.warning("can't load cookies")
             return False
 
     def is_logged_in(self) -> bool:
@@ -113,8 +125,8 @@ class LoginPage:
         self.wait_for_page_ready()
         
         if self.is_logged_in():
-            logger.info("login success, system have saved cookies")
             self.save_cookies()
+            logger.info("login success, system have saved cookies")
         else:
             logger.error("failed to login")
         
