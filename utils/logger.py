@@ -1,16 +1,8 @@
 import logging
 import os
+import time
 
 def setup_logger(name):
-    """
-    创建一个日志记录器
-    
-    Args:
-        name: 记录器名称，通常使用 __name__（当前模块的名称）
-        
-    Returns:
-        logging.Logger: 配置好的日志记录器
-    """
     logger = logging.getLogger(name)
     
     # 如果logger已经有处理器，说明已经被配置过，直接返回
@@ -29,12 +21,13 @@ def setup_logger(name):
     
     # 创建文件处理器
     os.makedirs('logs', exist_ok=True)
-    file_handler = logging.FileHandler('logs/app.log', encoding='utf-8')
+    file_name = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())+'.log'
+    file_handler = logging.FileHandler(f'logs/{file_name}', encoding='utf-8')
     file_handler.setLevel(logging.INFO)
     
     # 创建格式化器
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        '%(asctime)s  [%(levelname)s]  %(module)s  [%(filename)s:%(lineno)d]  %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
     

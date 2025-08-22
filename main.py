@@ -91,6 +91,7 @@ class App:
             pay_pass = self.account_entries['pay_pass'].get().strip()
             
             if not username or not password or not pay_pass:
+                logger.info("账号信息不能为空")
                 raise ValueError("账号信息不能为空")
             
             # 更新账号设置
@@ -166,6 +167,7 @@ class App:
                 path = os.path.join('config', file)
                 if os.path.exists(path):
                     os.remove(path)
+            logger.info("login state cleared")
             messagebox.showinfo("成功", "已清除登录状态！")
         except Exception as e:
             messagebox.showerror("错误", f"清除登录状态失败：{str(e)}")
