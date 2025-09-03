@@ -1,3 +1,4 @@
+from socket import timeout
 from playwright.sync_api import Page, expect
 import json
 import os
@@ -16,18 +17,6 @@ class LoginPage:
         self.cookie_file = os.path.join('config', 'cookies.json')
         self.storage_file = os.path.join('config', 'storage.json')
 
-    def wait_for_page_ready(self):
-        """等待页面完全加载并准备就绪"""
-        try:
-            self.page.wait_for_load_state('networkidle')
-            self.page.wait_for_load_state('domcontentloaded')
-            self.page.wait_for_load_state('load')
-            logger.info("Page is ready.")
-            return self
-        except Exception as e:
-            logger.error(f"failed to wait for page ready: {str(e)}")
-            return self
-
     def navigate(self):
         """导航到登录页面"""
         try:
@@ -35,7 +24,6 @@ class LoginPage:
         except:
             logger.error("Failed to navigate to the login page.")
             raise Exception("Failed to navigate to the login page.")
-        self.wait_for_page_ready()
         logger.info("Navigated to the login page successfully.")
         return self
 
@@ -92,8 +80,10 @@ class LoginPage:
         """检查是否已登录"""
         try:
             # 检查是否存在登录后才会出现的元素（粤海校区按钮）
-            return self.yuehai_button.is_visible(timeout=5000)
+            expect(self.yuehai_button).to_be_visible(timeout=5000)
+            return True
         except:
+            logger.error("can't find yuehai button, login failed")
             return False
 
     def login(self, username: str, password: str):
@@ -101,7 +91,6 @@ class LoginPage:
         
         if self.load_cookies():
             self.navigate()
-            self.wait_for_page_ready()
             
             if self.is_logged_in():
                 return self
@@ -111,7 +100,7 @@ class LoginPage:
         self.navigate()
         
         # 等待登录表单元素可见
-        expect(self.username_input).to_be_visible()
+        expect(self.username_input).to_be_visible(timeout=5000)
         expect(self.password_input).to_be_visible()
         expect(self.login_button).to_be_visible()
         
@@ -121,13 +110,11 @@ class LoginPage:
         self.remember_me_checkbox.check()
         self.login_button.click()
         
-        # 等待页面加载完成并验证登录状态
-        self.wait_for_page_ready()
-        
         if self.is_logged_in():
             self.save_cookies()
             logger.info("login success, system have saved cookies")
+            return True
         else:
             logger.error("failed to login")
+            return False
         
-        return self

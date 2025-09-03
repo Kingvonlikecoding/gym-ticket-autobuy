@@ -172,6 +172,23 @@ class App:
         except Exception as e:
             messagebox.showerror("错误", f"清除登录状态失败：{str(e)}")
 
+    def clear_logs(self):
+        """清除日志文件"""
+        try:
+            log_path = os.path.join('logs')
+            if os.path.exists(log_path):
+                for file in os.listdir(log_path):
+                    file_path = os.path.join(log_path, file)
+                    try:
+                        os.remove(file_path)
+                    except Exception as e:
+                        continue
+                logger.info("logs cleared")
+                messagebox.showinfo("成功", "已清除日志！")
+        except Exception as e:
+            logger.error(f"failed to clear logs: {str(e)}")
+            messagebox.showerror("错误", f"清除日志失败：{str(e)}")
+
     def setup_account_tab(self):
         """账号设置标签页"""
         # ttk.Frame 容器（标签页实例）
@@ -211,6 +228,7 @@ class App:
         # 保存和清除cookie按钮
         ttk.Button(button_frame, text="保存账号信息", command=self.save_account).pack(side='left', padx=10)
         ttk.Button(button_frame, text="清除登录状态", command=self.clear_cookies).pack(side='left', padx=10)
+        ttk.Button(button_frame, text="清除日志", command=self.clear_logs).pack(side='left', padx=10)
 
         # 说明文本
         note_text = """
@@ -334,59 +352,68 @@ class App:
         # 属于 App 类的一个成员变量，而不是局部变量
         
         # 运行按钮
-        ttk.Button(run_frame, text="开始运行", command=self.run_script).pack(pady=5)
+        ttk.Button(run_frame, text="开始运行", command=lambda: self.run_script(1)).pack(pady=5)
+        # 只登录按钮
+        ttk.Button(run_frame, text="只登录", command=lambda: self.run_script(2)).pack(pady=5)
 
-    def run_script(self):
+    def run_script(self, mode):
         """运行脚本"""
-        try:        
-            # 获取设置（是否要显示浏览器）
-            with open('config/settings.json', 'r', encoding='utf-8') as f:
-                settings = json.load(f)
+        with open('config/settings.json', 'r', encoding='utf-8') as f:
+            settings = json.load(f)
+        
+        cmd = ['uv', 'run', 'python', '-m', 'pytest']
+        if mode == 1:
+            cmd.append('./tests/test_main.py')
+        elif mode == 2:
+            cmd.append('./tests/test_login.py')
             
-            # 根据viewable设置运行命令
-            cmd = ['uv', 'run', 'python', '-m', 'pytest', './tests/test_main.py']
-            if settings.get('viewable', 'yes').lower() == 'yes':
-                cmd.append('--headed') 
-            
-            # 清空日志文本框
-            # 1.0：第 1 行（从 1 开始计数）第 0 个字符（即行首）开始
-            self.log_text.delete(1.0, tk.END)
-            self.log_text.insert(tk.END, f"starting the program: {' '.join(cmd)}\n\n")
-            self.log_text.update()
+        if settings.get('viewable', 'yes').lower() == 'yes':
+            cmd.append('--headed') 
+        
+        # 清空日志文本框
+        # 1.0：第 1 行（从 1 开始计数）第 0 个字符（即行首）开始
+        self.log_text.delete(1.0, tk.END)
+        self.log_text.insert(tk.END, f"starting the program: {' '.join(cmd)}\n\n")
+        self.log_text.update()
 
-            logger.info(f"running command: {' '.join(cmd)}")
-            
-            # 使用Popen执行命令并实时获取输出,run是阻塞的
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                bufsize=1  # 行缓冲
-            )
-            
+        logger.info(f"running command: {' '.join(cmd)}")
+        
+        # 使用Popen执行命令并实时获取输出,run是阻塞的
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            text=True,
+            bufsize=1  # 行缓冲
+        )
+        
+        try:
             capture_log = False
             while process.poll() is None:
                 # 读取输出
-                for line in process.stdout:
-                    # 开始捕获日志的标记
-                    if "Captured log call" in line:
-                        capture_log = True
+                line = process.stdout.readline()
+                # 开始捕获日志的标记
+                if "Captured log call" in line:
+                    capture_log = True
+                    continue
+                if capture_log:
+                    # 结束捕获日志的标记
+                    if "===" in line:
+                        capture_log = False
                         continue
                     if capture_log:
-                        # 结束捕获日志的标记
-                        if "===" in line:
-                            capture_log = False
-                            continue
-                        if capture_log:
-                            self.log_text.insert(tk.END, line)
-                            self.log_text.see(tk.END)
-                            self.log_text.update()
-                
+                        self.log_text.insert(tk.END, line)
+                        self.log_text.see(tk.END)
+                        self.log_text.update()
+            
         except Exception as e:
             logger.error(f"{' '.join(cmd)} run error: {str(e)}")
             messagebox.showerror("错误", f"运行脚本{' '.join(cmd)}失败：{str(e)}")
             self.log_text.insert(tk.END, f"\n{' '.join(cmd)} run error: {str(e)}\n")
+            process.terminate()
+            process.kill()
+        finally:
+            # 确保资源被释放
+            process.stdout.close()
 
 if __name__ == "__main__":
     root = tk.Tk()
