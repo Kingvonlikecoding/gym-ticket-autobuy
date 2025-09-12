@@ -29,7 +29,6 @@ class LoginPage:
 
     def save_cookies(self):
         """保存cookies和localStorage到文件"""
-        self.wait_for_page_ready()
         # 等待页面上的关键元素可见，确保页面真正加载完成
         expect(self.yuehai_button).to_be_visible(timeout=5000)
 
