@@ -14,6 +14,7 @@ def check_configuration():
 
     # 创建默认配置文件
     if not os.path.exists('config/settings.json'):
+        logger.info("Creating default settings.json file.")
         default_settings = {
             "username": "",
             "password": "",
@@ -28,6 +29,7 @@ def check_configuration():
         }
         with open('config/settings.json', 'w', encoding='utf-8') as f:
             json.dump(default_settings, f, indent=4)
+        logger.info("Default settings.json file created.")
 
 def check_dependencies():
     """检查并安装依赖项"""
@@ -41,21 +43,24 @@ def check_dependencies():
             count+=1
             logger.info("uv  installed successfully")
         except Exception as e:
-            logger.info("uv  installation failed: {e}")
+            logger.error("uv  installation failed: {e}")
+            sys.exit(1)
 
         try:
             subprocess.run(['uv', 'venv'], check=True)
             count+=1
             logger.info("uv venv installed successfully")
         except Exception as e:
-            logger.info("venv installation failed: {e}")
+            logger.error("venv installation failed: {e}")
+            sys.exit(1)
         
         try:
             subprocess.run(['uv', 'sync'], check=True)
             count+=1
             logger.info("uv sync completed successfully")
         except Exception as e:
-            logger.info("uv sync failed: {e}")
+            logger.error("uv sync failed: {e}")
+            sys.exit(1)
 
         try:
             subprocess.run(['uv', 'run', 'playwright', 'install', 'chromium', '--with-deps'], check=True)
@@ -66,8 +71,8 @@ def check_dependencies():
                 json.dump(settings, f, indent=4)
 
         except Exception as e:
-            logger.info("playwright installation failed: {e}")
-            sys.exit()    
+            logger.error("playwright installation failed: {e}")
+            sys.exit(1)    
 
     logger.info("All dependencies installed successfully.")
 
@@ -81,14 +86,14 @@ def main():
 
     # 运行主程序
     try:
-        process = subprocess.Popen(
-            ['uv', 'run', 'python', 'main.py'],
-            start_new_session=True
-        )
-
+        from main import launch_app
+        launch_app()
+    except ImportError as e:
+        logger.error(f"Error importing launch_app: {e}")
+        sys.exit(1)
     except Exception as e:
-        logger.error(f"Error running main.py: {e}")
-        sys.exit()
+        logger.error(f"Error running launch_app: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

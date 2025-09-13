@@ -15,8 +15,8 @@
 
 
 ## 如何使用
-1. **clickme.py**
->运行`clickme.py`文件，将显示操作界面，你可以在这进行配置 账号信息 、 预约设置 、 运行
+1. **launcher.py**
+>运行`launcher.py`文件，将显示操作界面，你可以在这进行配置 账号信息 、 预约设置 、 运行
 
 2.  **for_scheduler.py**: 
 >配合windows自带的定时任务功能task scheduler（或者其他定时执行任务的软件），设置定时任务（建议设置每天中午12:30），创建任务选择`for_scheduler.py`即可实现自动化。

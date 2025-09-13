@@ -415,7 +415,11 @@ class App:
             # 确保资源被释放
             process.stdout.close()
 
-if __name__ == "__main__":
+def launch_app():
+    """启动应用"""
     root = tk.Tk()
     app = App(root)
     root.mainloop() # “无限循环”，持续监听和处理用户与界面的交互事件
+
+if __name__ == "__main__":
+    launch_app()
