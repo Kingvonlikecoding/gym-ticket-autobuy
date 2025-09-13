@@ -422,4 +422,7 @@ def launch_app():
     root.mainloop() # “无限循环”，持续监听和处理用户与界面的交互事件
 
 if __name__ == "__main__":
+    from pathlib import Path
+    cur_path = Path(__file__).parent
+    os.chdir(cur_path)
     launch_app()
