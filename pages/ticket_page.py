@@ -75,6 +75,16 @@ class TicketPage:
             logger.error(f"Failed to select time slot: {time_slot}")
         return self
 
+    def leftover_timeslot(self):
+        """查询当日有票的时间段"""
+        available_timeslots = self.page.locator("div.element:has-text('可预约')").all()
+        visible_timeslots = [t for t in available_timeslots if t.is_visible()]
+        if not visible_timeslots:
+            logger.error("no timeslots available")
+            return None
+        # 返回时间段的文本内容，而不是Locator对象
+        return [t.text_content().strip() for t in visible_timeslots]
+
     def select_specific_venue(self, venue_type: str, court=None):
         """选择具体场地"""
         self.current_venue_type = venue_type
