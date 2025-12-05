@@ -38,45 +38,80 @@ def check_dependencies(config_path):
     """检查并安装依赖项"""
     with open(config_path, 'r') as f:
         settings = json.load(f)
-    count=int(settings['count'])
-    if count<4:
-        count=0
+    
+    # 首先判断count是否为4，如果是则跳过所有依赖项检查和安装
+    count = int(settings.get('count', 0))
+    if count == 4:
+        logger.info("All dependencies already installed (count=4), skipping all checks.")
+        return
+    
+    # 检查并安装 uv
+    try:
+        # 尝试运行 uv --version 来检查是否已安装
+        subprocess.run(['uv', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        logger.info("uv is already installed")
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # 如果未安装，则安装
         try:
             subprocess.run(['pip', 'install', 'uv'], check=True)
-            count+=1
-            logger.info("uv  installed successfully")
+            logger.info("uv installed successfully")
         except Exception as e:
-            logger.error("uv  installation failed: {e}")
+            logger.error(f"uv installation failed: {e}")
             sys.exit(1)
 
+    # 检查并创建虚拟环境
+    venv_just_created = False
+    if not os.path.exists('venv'):
         try:
             subprocess.run(['uv', 'venv'], check=True)
-            count+=1
-            logger.info("uv venv installed successfully")
+            logger.info("uv venv created successfully")
+            venv_just_created = True
         except Exception as e:
-            logger.error("venv installation failed: {e}")
+            logger.error(f"venv creation failed: {e}")
             sys.exit(1)
-        
-        try:
+    else:
+        logger.info("Virtual environment already exists")
+    
+    # 同步依赖项（仅在首次安装或虚拟环境刚创建时执行）
+    try:
+        # 只有在首次安装或虚拟环境刚创建时才执行uv sync
+        if count < 3 or venv_just_created:
             subprocess.run(['uv', 'sync'], check=True)
-            count+=1
             logger.info("uv sync completed successfully")
-        except Exception as e:
-            logger.error("uv sync failed: {e}")
-            sys.exit(1)
+        else:
+            logger.info("Dependencies already synced, skipping uv sync")
+    except Exception as e:
+        logger.error(f"uv sync failed: {e}")
+        sys.exit(1)
 
+    # 检查并安装 playwright chromium
+    try:
+        # 尝试运行 playwright --version 来检查是否已安装
+        subprocess.run(['uv', 'run', 'playwright', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        logger.info("playwright is already installed")
+        # 检查 chromium 是否已安装
+        result = subprocess.run(['uv', 'run', 'playwright', 'install', 'chromium', '--dry-run'], 
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if "already installed" in result.stdout or "already installed" in result.stderr:
+            logger.info("chromium is already installed")
+        else:
+            # 如果 chromium 未安装，则安装
+            subprocess.run(['uv', 'run', 'playwright', 'install', 'chromium', '--with-deps'], check=True)
+            logger.info("chromium installed successfully")
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # 如果 playwright 未安装，则安装
         try:
             subprocess.run(['uv', 'run', 'playwright', 'install', 'chromium', '--with-deps'], check=True)
-            count+=1
-            logger.info("playwright install completed successfully")
-            settings['count']=count
-            with open(config_path, 'w') as f:
-                json.dump(settings, f, indent=4)
-
+            logger.info("playwright and chromium installed successfully")
         except Exception as e:
-            logger.error("playwright installation failed: {e}")
-            sys.exit(1)    
-
+            logger.error(f"playwright installation failed: {e}")
+            sys.exit(1)
+    
+    # 更新配置文件中的count为4，表示所有依赖项都已安装
+    settings['count'] = 4
+    with open(config_path, 'w') as f:
+        json.dump(settings, f, indent=4)
+    
     logger.info("All dependencies installed successfully.")
 
 def main():
