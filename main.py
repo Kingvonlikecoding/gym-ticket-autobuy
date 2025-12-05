@@ -41,17 +41,66 @@ class App:
             self.load_settings(config_path)
         else:
             self.load_default_settings()
+        
+        # 启动监控settings.json变化的线程
+        self.monitor_settings_json_changes()
+        
         logger.info("GUI initialized successfully")
 
     def get_config_file_path(self, username):
         """根据用户名获取配置文件路径"""
         return os.path.join('config', f'settings_{username}.json')
 
+    def get_last_used_config_path(self):
+        """获取上一次使用的配置文件路径"""
+        last_used_path = os.path.join('config', 'last_used.json')
+        if os.path.exists(last_used_path):
+            try:
+                with open(last_used_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    return data.get('last_used_config', None)
+            except Exception as e:
+                logger.error(f"Failed to read last_used.json: {str(e)}")
+        return None
+    
+    def save_last_used_config_path(self, config_path):
+        """保存上一次使用的配置文件路径"""
+        try:
+            last_used_path = os.path.join('config', 'last_used.json')
+            os.makedirs('config', exist_ok=True)
+            with open(last_used_path, 'w', encoding='utf-8') as f:
+                json.dump({'last_used_config': config_path}, f, indent=4)
+            logger.info(f"Saved last used config path: {config_path}")
+        except Exception as e:
+            logger.error(f"Failed to save last_used.json: {str(e)}")
+    
+    def sync_settings_files(self, source_path, target_path):
+        """将源配置文件同步到目标配置文件"""
+        try:
+            if os.path.exists(source_path):
+                with open(source_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                
+                os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                with open(target_path, 'w', encoding='utf-8') as f:
+                    json.dump(settings, f, indent=4)
+                logger.info(f"Synced config from {source_path} to {target_path}")
+        except Exception as e:
+            logger.error(f"Failed to sync config files: {str(e)}")
+    
     def load_default_settings(self):
         """加载默认配置"""
         try:
-            # 首先检查是否存在默认的settings.json文件
+            # 获取上一次使用的配置文件路径
+            last_used_config = self.get_last_used_config_path()
             default_path = os.path.join('config', 'settings.json')
+            
+            # 如果有上一次使用的配置文件，将其同步到settings.json
+            if last_used_config and os.path.exists(last_used_config):
+                logger.info(f"Using last used config: {last_used_config}")
+                self.sync_settings_files(last_used_config, default_path)
+            
+            # 首先检查是否存在默认的settings.json文件
             if os.path.exists(default_path):
                 try:
                     # 读取默认配置
@@ -64,7 +113,7 @@ class App:
                         if username:
                             new_path = self.get_config_file_path(username)
                             
-                            # 创建新的配置文件
+                            # 创建新的配置文件并与settings.json同步
                             os.makedirs('config', exist_ok=True)
                             try:
                                 with open(new_path, 'w', encoding='utf-8') as f:
@@ -100,6 +149,38 @@ class App:
             # 确保在任何错误情况下都有一个可用的配置状态
             self.load_settings()
 
+    def monitor_settings_json_changes(self):
+        """监控settings.json文件的变化并同步到对应学号的配置文件"""
+        try:
+            default_path = os.path.join('config', 'settings.json')
+            if os.path.exists(default_path):
+                with open(default_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                
+                # 检查是否有用户名
+                if 'username' in settings and settings['username']:
+                    username = settings['username'].strip()
+                    if username:
+                        # 同步到对应学号的配置文件
+                        user_config_path = self.get_config_file_path(username)
+                        self.sync_settings_files(default_path, user_config_path)
+                        logger.info(f"Synced settings.json to {user_config_path} based on username: {username}")
+                        
+                        # 更新当前配置文件路径
+                        if not self.current_config_file or self.current_config_file == default_path:
+                            self.current_config_file = user_config_path
+                            # 保存上一次使用的配置文件路径
+                            self.save_last_used_config_path(user_config_path)
+                            # 更新界面显示
+                            if hasattr(self, 'current_config_label'):
+                                file_name = os.path.basename(self.current_config_file)
+                                self.current_config_label.config(text=f"当前配置文件：{file_name}")
+        except Exception as e:
+            logger.error(f"Failed to monitor settings.json changes: {str(e)}")
+        
+        # 每1秒检查一次
+        self.root.after(1000, self.monitor_settings_json_changes)
+    
     def load_settings(self, file_path=None):
         """加载配置"""
         try:
@@ -108,6 +189,8 @@ class App:
             # 如果提供了文件路径，使用它；否则使用当前配置文件
             if file_path:
                 self.current_config_file = file_path
+                # 保存上一次使用的配置文件路径
+                self.save_last_used_config_path(file_path)
             elif not self.current_config_file:
                 # 如果没有当前配置文件且没有提供路径，返回空配置
                 logger.info("No config file specified, using empty configuration")
@@ -149,6 +232,14 @@ class App:
                 self.current_config_label.config(text=f"当前配置文件：{file_name}")
                     
             logger.info(f"configuration loaded successfully from {self.current_config_file}")
+            
+            # 将当前配置文件同步到settings.json
+            default_path = os.path.join('config', 'settings.json')
+            self.sync_settings_files(self.current_config_file, default_path)
+            
+            # 如果当前配置文件是settings.json，同步到对应学号的配置文件
+            if self.current_config_file == default_path:
+                self.monitor_settings_json_changes()
             
         except json.JSONDecodeError:
             logger.error(f"the configuration file {self.current_config_file} is not valid JSON")
@@ -194,12 +285,19 @@ class App:
             
             # 确定新的配置文件路径（使用用户名）
             new_config_path = self.get_config_file_path(username)
+            default_path = os.path.join('config', 'settings.json')
             
             # 保存配置文件
             try:
                 os.makedirs('config', exist_ok=True)
                 with open(new_config_path, 'w', encoding='utf-8') as f:
                     json.dump(settings, f, indent=4)
+                
+                # 同时将配置同步到settings.json
+                self.sync_settings_files(new_config_path, default_path)
+                
+                # 保存上一次使用的配置文件路径
+                self.save_last_used_config_path(new_config_path)
             except PermissionError:
                 logger.error(f"permission denied when saving account to {new_config_path}")
                 messagebox.showerror("错误", "保存账号信息失败：权限不足")
@@ -278,6 +376,10 @@ class App:
             with open(self.current_config_file, 'w', encoding='utf-8') as f:
                 json.dump(settings, f, indent=4)
             
+            # 同时将配置同步到settings.json
+            default_path = os.path.join('config', 'settings.json')
+            self.sync_settings_files(self.current_config_file, default_path)
+            
             logger.info(f"appointment settings saved to {self.current_config_file}")
             messagebox.showinfo("成功", "预约设置保存成功！")
             
@@ -285,7 +387,7 @@ class App:
             logger.error(f"failed to save appointment settings: {str(e)}")
             messagebox.showerror("错误", f"保存预约设置失败：{str(e)}")
 
-    def clear_cookies(self):
+    def clear_cookies(self, show_message=True):
         """清除cookie和存储的登录状态"""
         try:
             cookie_files = ['cookies.json', 'storage.json']
@@ -294,7 +396,8 @@ class App:
                 if os.path.exists(path):
                     os.remove(path)
             logger.info("login state cleared")
-            messagebox.showinfo("成功", "已清除登录状态！")
+            if show_message:
+                messagebox.showinfo("成功", "已清除登录状态！")
         except Exception as e:
             messagebox.showerror("错误", f"清除登录状态失败：{str(e)}")
 
@@ -329,12 +432,12 @@ class App:
         if file_path:
             # 确认是否切换账号
             if messagebox.askyesno("确认", "切换账号将加载新的配置信息，当前未保存的修改将丢失。是否继续？"):
-                # 清除登录状态
-                self.clear_cookies()
+                # 清除登录状态（不显示单独的消息框）
+                self.clear_cookies(show_message=False)
                 # 加载选择的配置文件
                 self.load_settings(file_path)
                 logger.info(f"Switched to config file: {file_path}")
-                messagebox.showinfo("成功", "账号切换成功！")
+                messagebox.showinfo("成功", "登录状态已清除，账号切换成功！")
 
     def setup_account_tab(self):
         """账号设置标签页"""
