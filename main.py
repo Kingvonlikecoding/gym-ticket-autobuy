@@ -1,8 +1,43 @@
+# 体育馆预约助手 - 主程序
+# 
+# 该程序是一个基于Tkinter的GUI应用，用于自动化体育馆场地预约
+# 主要包含以下模块和功能：
+# 
+# 1. 配置管理模块
+#    - get_config_file_path：根据用户名获取配置文件路径
+#    - get_last_used_config_path：获取上一次使用的配置文件路径
+#    - save_last_used_config_path：保存上一次使用的配置文件路径
+#    - sync_settings_files：将源配置文件同步到目标配置文件
+#    - load_default_settings：加载默认配置
+#    - load_settings：加载配置文件
+#    - monitor_settings_json_changes：监控配置文件变化并同步
+# 
+# 2. 账号管理模块
+#    - save_account：保存账号信息
+#    - clear_cookies：清除登录状态
+#    - clear_logs：清除日志文件
+#    - select_config_file：选择配置文件
+# 
+# 3. 预约设置模块
+#    - save_settings：保存预约设置
+#    - query_leftover_timeslots：查询当日有票的时间段
+#    - display_leftover_timeslots：显示查询到的有票时间段
+# 
+# 4. GUI界面模块
+#    - setup_account_tab：设置账号设置标签页
+#    - setup_settings_tab：设置预约设置标签页
+#    - setup_run_tab：设置运行控制标签页
+# 
+# 5. 预约执行模块
+#    - run_script：运行脚本（支持三种模式：完整预约、只登录、查询余票）
+#    - launch_app：启动应用
+# 
 import tkinter as tk
 from tkinter import ttk, messagebox
 import json
 import os
 import subprocess
+import webbrowser
 from datetime import datetime
 from utils.logger import setup_logger
 
@@ -499,6 +534,17 @@ class App:
             3. 切换账号前请确保已保存当前账号的修改
         """
         ttk.Label(main_frame, text=note_text, justify='left').pack(pady=20)
+        
+        # 添加官网链接（可点击）
+        link_label = ttk.Label(main_frame, text="官网以下载最新版：https://github.com/Kingvonlikecoding/gym-ticket-autobuy", justify='center', foreground="blue", cursor="hand2")
+        link_label.pack(pady=10)
+        
+        # 点击链接打开网页
+        def open_link(event):
+            webbrowser.open_new("https://github.com/Kingvonlikecoding/gym-ticket-autobuy")
+        
+        # 绑定点击事件
+        link_label.bind("<Button-1>", open_link)
 
     def setup_settings_tab(self):
         """预约设置标签页"""
