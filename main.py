@@ -47,16 +47,11 @@ class App:
     def __init__(self, root, config_path=None):
         self.root = root
         self.root.title("体育馆预约助手")
-        self.root.geometry("900x650")  # 窗口大小
+        self.root.geometry("1100x800")  # 调整窗口大小以确保所有内容都能完全显示
         
-        # 创建一个标签页控件
-        # 布局控件的三大主要方法：pack()，grid()，place()
-        self.notebook = ttk.Notebook(root) 
-        # expand=True	如果可用空间大于控件所需空间，则扩展控件以填充空间
-        # fill='both'	在水平和垂直方向都填充可用空间
-        # padx=10	控件与父容器之间左右留白 10 像素
-        # pady=5	控件与父容器之间上下留白 5 像素
-        self.notebook.pack(expand=True, fill='both', padx=10, pady=5)
+        # 创建一个主框架，替代标签页
+        self.main_frame = ttk.Frame(root)
+        self.main_frame.pack(expand=True, fill='both', padx=10, pady=5)
         
         # 输入框的内容存储
         self.account_entries = {}
@@ -66,10 +61,8 @@ class App:
         # 当前配置文件路径
         self.current_config_file = None
         
-        # 初始化页面为3个标签页
-        self.setup_account_tab()
-        self.setup_settings_tab()
-        self.setup_run_tab()
+        # 初始化所有内容到一个页面
+        self.setup_ui()
         
         # 加载配置
         if config_path:
@@ -351,10 +344,19 @@ class App:
                 self.current_config_label.config(text=f"当前配置文件：{file_name}")
             
             logger.info(f"account saved to {new_config_path}")
-            messagebox.showinfo("提示", "账号信息保存成功")
         except Exception as e:
             logger.error(f"failed to save account: {str(e)}")
-            messagebox.showerror("错误", f"保存账号信息失败：{str(e)}")
+            logger.error(f"failed to save account automatically: {str(e)}")
+
+    def auto_save_account_on_key(self, event=None):
+        """在按键释放时自动保存账号信息"""
+        # 只在按下Enter键时保存
+        if event and event.keysym == 'Return':
+            self.auto_save_account()
+
+    def auto_save_account(self, event=None):
+        """自动保存账号信息"""
+        self.save_account()
 
     def save_settings(self):
         """保存预约设置"""
@@ -416,11 +418,20 @@ class App:
             self.sync_settings_files(self.current_config_file, default_path)
             
             logger.info(f"appointment settings saved to {self.current_config_file}")
-            messagebox.showinfo("成功", "预约设置保存成功！")
             
         except Exception as e:
             logger.error(f"failed to save appointment settings: {str(e)}")
-            messagebox.showerror("错误", f"保存预约设置失败：{str(e)}")
+            logger.error(f"failed to save settings automatically: {str(e)}")
+
+    def auto_save_settings_on_key(self, event=None):
+        """在按键释放时自动保存预约设置"""
+        # 只在按下Enter键时保存
+        if event and event.keysym == 'Return':
+            self.auto_save_settings()
+
+    def auto_save_settings(self, event=None):
+        """自动保存预约设置"""
+        self.save_settings()
 
     def clear_cookies(self, show_message=True):
         """清除cookie和存储的登录状态"""
@@ -465,24 +476,47 @@ class App:
         )
         
         if file_path:
-            # 确认是否切换账号
-            if messagebox.askyesno("确认", "切换账号将加载新的配置信息，当前未保存的修改将丢失。是否继续？"):
-                # 清除登录状态（不显示单独的消息框）
-                self.clear_cookies(show_message=False)
-                # 加载选择的配置文件
-                self.load_settings(file_path)
-                logger.info(f"Switched to config file: {file_path}")
-                messagebox.showinfo("成功", "登录状态已清除，账号切换成功！")
+            # 自动保存当前设置
+            self.save_account()
+            self.save_settings()
+            # 清除登录状态（不显示消息框）
+            self.clear_cookies(show_message=False)
+            # 加载选择的配置文件
+            self.load_settings(file_path)
+            logger.info(f"Switched to config file: {file_path}")
 
-    def setup_account_tab(self):
-        """账号设置标签页"""
-        # ttk.Frame 容器（标签页实例）
-        account_frame = ttk.Frame(self.notebook)
-        self.notebook.add(account_frame, text="账号设置")
+    def setup_ui(self):
+        """设置UI界面，将所有内容合并到一个页面"""
+        # 创建顶部框架，用于放置账号设置和预约设置
+        top_frame = ttk.Frame(self.main_frame)
+        top_frame.pack(fill='x', padx=10, pady=5)
+        
+        # 创建左侧框架，用于放置账号设置
+        left_frame = ttk.Frame(top_frame)
+        left_frame.pack(side='left', fill='both', expand=True, padx=(0, 10))
+        
+        # 创建右侧框架，用于放置预约设置
+        right_frame = ttk.Frame(top_frame)
+        right_frame.pack(side='right', fill='both', expand=True)
+        
+        # 创建账号设置部分（放在左侧）
+        self.setup_account_tab(left_frame)
+        
+        # 创建预约设置部分（放在右侧）
+        self.setup_settings_tab(right_frame)
+        
+        # 创建运行控制部分（放在底部）
+        self.setup_run_section(self.main_frame)
+    
+    def setup_account_tab(self, parent_frame):
+        """账号设置部分"""
+        # 创建账号设置框架
+        account_frame = ttk.LabelFrame(parent_frame, text="账号设置")
+        account_frame.pack(expand=True, fill='both', padx=20, pady=10)
 
         # 创建主框架（account_frame的child，但是是控件而不是容器）
-        main_frame = ttk.LabelFrame(account_frame, text="账号信息")
-        main_frame.pack(expand=True, fill='both', padx=20, pady=20)
+        main_frame = ttk.Frame(account_frame)
+        main_frame.pack(expand=True, fill='both', padx=10, pady=10)
 
         # 账号切换功能区
         switch_frame = ttk.LabelFrame(main_frame, text="账号切换")
@@ -521,39 +555,26 @@ class App:
         button_frame = ttk.Frame(main_frame)
         button_frame.pack(pady=20) #默认居中
         
-        # 保存和清除cookie按钮
-        ttk.Button(button_frame, text="保存账号信息", command=self.save_account).pack(side='left', padx=10)
+        # 清除cookie和日志按钮
         ttk.Button(button_frame, text="清除登录状态", command=self.clear_cookies).pack(side='left', padx=10)
         ttk.Button(button_frame, text="清除日志", command=self.clear_logs).pack(side='left', padx=10)
+        
+        # 为账号信息输入字段添加自动保存事件监听器
+        for key, entry in self.account_entries.items():
+            entry.bind("<FocusOut>", self.auto_save_account)
+            entry.bind("<KeyRelease>", self.auto_save_account_on_key)
+            entry.bind("<<ComboboxSelected>>", self.auto_save_account)
 
-        # 说明文本
-        note_text = """
-            注意事项：
-            1. 更换账号时请点击"选择配置文件"按钮，系统会自动清除之前的登录状态
-            2. 所有信息都会保存在本地settings_学号.json文件中，不会上传到网络，请勿分享此文件
-            3. 切换账号前请确保已保存当前账号的修改
-        """
-        ttk.Label(main_frame, text=note_text, justify='left').pack(pady=20)
-        
-        # 添加官网链接（可点击）
-        link_label = ttk.Label(main_frame, text="官网以下载最新版：https://github.com/Kingvonlikecoding/gym-ticket-autobuy", justify='center', foreground="blue", cursor="hand2")
-        link_label.pack(pady=10)
-        
-        # 点击链接打开网页
-        def open_link(event):
-            webbrowser.open_new("https://github.com/Kingvonlikecoding/gym-ticket-autobuy")
-        
-        # 绑定点击事件
-        link_label.bind("<Button-1>", open_link)
+        # 注意事项和官网链接已移至页面底部
 
-    def setup_settings_tab(self):
-        """预约设置标签页"""
-        settings_frame = ttk.Frame(self.notebook)
-        self.notebook.add(settings_frame, text="预约设置")
+    def setup_settings_tab(self, parent_frame):
+        """预约设置部分"""
+        settings_frame = ttk.LabelFrame(parent_frame, text="预约设置")
+        settings_frame.pack(expand=True, fill='both', padx=20, pady=10)
         
         # 创建主框架
         main_frame = ttk.Frame(settings_frame)
-        main_frame.pack(expand=True, fill='both', padx=20, pady=20)
+        main_frame.pack(expand=True, fill='both', padx=10, pady=10)
         
         # 创建左侧设置框架
         left_frame = ttk.Frame(main_frame)
@@ -652,8 +673,16 @@ class App:
             row += 1
 
 
-        # 添加保存按钮，因为没加sticky参数所以居中
-        ttk.Button(left_frame, text="保存预约设置", command=self.save_settings).grid(row=row, column=0, pady=10)
+        # 为预约设置和高级设置输入字段添加自动保存事件监听器
+        for key, entry in self.settings_entries.items():
+            entry.bind("<FocusOut>", self.auto_save_settings)
+            entry.bind("<KeyRelease>", self.auto_save_settings_on_key)
+            entry.bind("<<ComboboxSelected>>", self.auto_save_settings)
+        
+        for key, entry in self.advanced_settings_entries.items():
+            entry.bind("<FocusOut>", self.auto_save_settings)
+            entry.bind("<KeyRelease>", self.auto_save_settings_on_key)
+            entry.bind("<<ComboboxSelected>>", self.auto_save_settings)
         
         # 添加查询当日有票时间段的按钮和文本框
         row += 1
@@ -667,39 +696,22 @@ class App:
         # 初始提示信息
         self.leftover_textbox.insert(tk.END, "点击'查询当日有票的时间段'按钮开始查询...")
         
-        # 在右侧添加使用说明
-        ttk.Label(right_frame, text="使用说明", font=('Helvetica', 10, 'bold')).pack(pady=(0, 5))
-        usage_text = """
-            ------高级设置------
+        # 高级设置说明已移至页面底部
 
-            1. 显示浏览器：
-            yes - 显示操作过程
-            no  - 后台运行
-
-            2. 刷新间隔：
-            刷新在 即将放 明天的票 时触发
-            ，间隔越小，刷新速度越快，但
-            是有可能网速跟不上导致失败
-
-            默认1.5秒，如果网络速度较慢
-            ，失败了，可设置大一点
-        """
-        ttk.Label(right_frame, text=usage_text, justify='left').pack()
-
-    def setup_run_tab(self):
-        """运行标签页"""
-        run_frame = ttk.Frame(self.notebook)
-        self.notebook.add(run_frame, text="运行")
-        
-        # 创建日志文本框
-        self.log_text = tk.Text(run_frame, height=20, width=100)
-        self.log_text.pack(padx=5, pady=5)
-        # 属于 App 类的一个成员变量，而不是局部变量
+    def setup_run_section(self, parent_frame):
+        """运行控制部分"""
+        run_frame = ttk.LabelFrame(parent_frame, text="运行控制")
+        run_frame.pack(fill='x', padx=20, pady=10)
         
         # 运行按钮
-        ttk.Button(run_frame, text="开始运行", command=lambda: self.run_script(1)).pack(pady=5)
+        button_frame = ttk.Frame(run_frame)
+        button_frame.pack(pady=10)
+        ttk.Button(button_frame, text="开始抢票", command=lambda: self.run_script(1)).pack(side='left', padx=10)
         # 只登录按钮
-        ttk.Button(run_frame, text="只登录", command=lambda: self.run_script(2)).pack(pady=5)
+        ttk.Button(button_frame, text="只登录", command=lambda: self.run_script(2)).pack(side='left', padx=10)
+        
+        # 添加合并后的说明部分
+        self.setup_instructions_section(parent_frame)
 
     def run_script(self, mode):
         """运行脚本"""
@@ -741,12 +753,6 @@ class App:
         if settings.get('viewable', 'yes').lower() == 'yes' and (mode == 1 or mode == 2):
             cmd.append('--headed') 
         
-        # 清空日志文本框
-        # 1.0：第 1 行（从 1 开始计数）第 0 个字符（即行首）开始
-        self.log_text.delete(1.0, tk.END)
-        self.log_text.insert(tk.END, f"starting the program: {' '.join(cmd)}\n\n")
-        self.log_text.update()
-
         logger.info(f"running command: {' '.join(cmd)}")
         
         # 使用Popen执行命令并实时获取输出,run是阻塞的
@@ -758,28 +764,23 @@ class App:
         )
         
         try:
-            capture_log = False
+            # 读取输出但不显示在GUI上
             while process.poll() is None:
-                # 读取输出
                 line = process.stdout.readline()
-                # 开始捕获日志的标记
-                if "Captured log call" in line:
-                    capture_log = True
-                    continue
-                if capture_log:
-                    # 结束捕获日志的标记
-                    if "===" in line:
-                        capture_log = False
-                        continue
-                    if capture_log:
-                        self.log_text.insert(tk.END, line)
-                        self.log_text.see(tk.END)
-                        self.log_text.update()
             
+            # 获取命令执行结果
+            exit_code = process.returncode
+            
+            # 判断抢票结果并显示相应的messagebox
+            if mode == 1:  # 如果是完整预约模式
+                if exit_code == 0:
+                    messagebox.showinfo("成功", "抢票成功！")
+                else:
+                    messagebox.showerror("失败", "抢票失败，请查看日志了解详情。")
+            # 只登录模式不显示messagebox提示
         except Exception as e:
             logger.error(f"{' '.join(cmd)} run error: {str(e)}")
             messagebox.showerror("错误", f"运行脚本{' '.join(cmd)}失败：{str(e)}")
-            self.log_text.insert(tk.END, f"\n{' '.join(cmd)} run error: {str(e)}\n")
             process.terminate()
             process.kill()
         finally:
@@ -789,6 +790,40 @@ class App:
             # 如果是查询模式，读取结果文件并显示
             if mode == 3:
                 self.display_leftover_timeslots()
+    
+    def setup_instructions_section(self, parent_frame):
+        """合并显示注意事项、官网链接和高级设置说明"""
+        instructions_frame = ttk.LabelFrame(parent_frame, text="使用说明与注意事项")
+        instructions_frame.pack(fill='x', padx=20, pady=10)
+        
+        # 创建内容框架
+        content_frame = ttk.Frame(instructions_frame)
+        content_frame.pack(fill='x', padx=20, pady=10)
+        
+        # 注意事项
+        note_frame = ttk.Frame(content_frame)
+        note_frame.pack(fill='x', pady=(0, 5))
+        ttk.Label(note_frame, text="注意事项", font=('Helvetica', 10, 'bold')).pack(anchor='w', pady=(0, 5))
+        note_text = """
+1. 所有修改都会自动保存
+2. 所有信息都会保存在本地settings_学号.json文件中，不会上传到网络，请勿分享此文件
+3. 详细说明请查看README.md文件  
+        """
+        ttk.Label(note_frame, text=note_text, justify='left').pack(anchor='w')
+        
+        # 官网链接
+        link_frame = ttk.Frame(content_frame)
+        link_frame.pack(fill='x', pady=(0, 10))
+        ttk.Label(link_frame, text="官网下载最新版：", font=('Helvetica', 10, 'bold')).pack(side='left')
+        link_label = ttk.Label(link_frame, text="https://github.com/Kingvonlikecoding/gym-ticket-autobuy", foreground="blue", cursor="hand2")
+        link_label.pack(side='left')
+        
+        # 点击链接打开网页
+        def open_link(event):
+            webbrowser.open_new("https://github.com/Kingvonlikecoding/gym-ticket-autobuy")
+        
+        # 绑定点击事件
+        link_label.bind("<Button-1>", open_link)
 
     def query_leftover_timeslots(self):
         """查询当日有票的时间段"""
