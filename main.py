@@ -1,36 +1,55 @@
 # 体育馆预约助手 - 主程序
+# Gymnasium Reservation Assistant - Main Program
 # 
-# 该程序是一个基于Tkinter的GUI应用，用于自动化体育馆场地预约
-# 主要包含以下模块和功能：
+# 程序简介：
+# 该程序是一个基于Tkinter的GUI应用，用于自动化体育馆场地预约流程
+# 通过图形界面提供直观的操作方式，支持多账号配置管理和实时预约监控
+# 
+# 核心功能模块：
 # 
 # 1. 配置管理模块
-#    - get_config_file_path：根据用户名获取配置文件路径
-#    - get_last_used_config_path：获取上一次使用的配置文件路径
-#    - save_last_used_config_path：保存上一次使用的配置文件路径
-#    - sync_settings_files：将源配置文件同步到目标配置文件
-#    - load_default_settings：加载默认配置
-#    - load_settings：加载配置文件
-#    - monitor_settings_json_changes：监控配置文件变化并同步
+#    - 多用户配置文件管理
+#    - 配置文件自动同步与备份
+#    - 配置变更实时监控
 # 
 # 2. 账号管理模块
-#    - save_account：保存账号信息
-#    - clear_cookies：清除登录状态
-#    - clear_logs：清除日志文件
-#    - select_config_file：选择配置文件
+#    - 账号信息安全存储
+#    - 登录状态管理
+#    - 日志文件管理
 # 
 # 3. 预约设置模块
-#    - save_settings：保存预约设置
-#    - query_leftover_timeslots：查询当日有票的时间段
-#    - display_leftover_timeslots：显示查询到的有票时间段
+#    - 预约时间、场地、场地类型等参数设置
+#    - 余票实时查询
+#    - 高级预约策略配置
 # 
 # 4. GUI界面模块
-#    - setup_account_tab：设置账号设置标签页
-#    - setup_settings_tab：设置预约设置标签页
-#    - setup_run_tab：设置运行控制标签页
+#    - 直观的单页面操作界面
+#    - 实时状态显示
+#    - 友好的错误提示
 # 
 # 5. 预约执行模块
-#    - run_script：运行脚本（支持三种模式：完整预约、只登录、查询余票）
-#    - launch_app：启动应用
+#    - 自动化预约流程执行
+#    - 多种运行模式支持（完整预约、只登录、查询余票）
+#    - 异常情况处理与重试机制
+# 
+# 使用技术栈：
+# - Python 3.x
+# - Tkinter (GUI框架)
+# - Playwright (网页自动化)
+# - JSON (配置文件格式)
+# 
+# 项目结构：
+# - main.py          : 主程序入口和GUI实现
+# - launcher.py      : 依赖管理和启动脚本
+# - pages/           : 页面对象模式实现
+# - scripts/         : 核心业务逻辑脚本
+# - utils/           : 工具函数集合
+# - config/          : 配置文件目录
+# 
+# 开发说明：
+# 该程序采用模块化设计，便于扩展和维护
+# 支持自定义配置和高级功能扩展
+# 日志系统便于问题追踪和调试
 # 
 import tkinter as tk
 from tkinter import ttk, messagebox
@@ -48,7 +67,7 @@ class App:
     def __init__(self, root, config_path=None):
         self.root = root
         self.root.title("体育馆预约助手")
-        self.root.geometry("1100x800")  # 调整窗口大小以确保所有内容都能完全显示
+        self.root.geometry("1000x800")  # 调整窗口大小以确保所有内容都能完全显示
         
         # 创建一个主框架，替代标签页
         self.main_frame = ttk.Frame(root)
