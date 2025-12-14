@@ -36,9 +36,10 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import json
 import os
-import subprocess
 import webbrowser
 from datetime import datetime
+import sys
+from unittest import mock
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -112,7 +113,7 @@ class App:
                 os.makedirs(os.path.dirname(target_path), exist_ok=True)
                 with open(target_path, 'w', encoding='utf-8') as f:
                     json.dump(settings, f, indent=4)
-                logger.info(f"Synced config from {source_path} to {target_path}")
+                logger.debug(f"Synced config from {source_path} to {target_path}")
         except Exception as e:
             logger.error(f"Failed to sync config files: {str(e)}")
     
@@ -192,7 +193,7 @@ class App:
                         # 同步到对应学号的配置文件
                         user_config_path = self.get_config_file_path(username)
                         self.sync_settings_files(default_path, user_config_path)
-                        logger.info(f"Synced settings.json to {user_config_path} based on username: {username}")
+                        logger.debug(f"Synced settings.json to {user_config_path} based on username: {username}")
                         
                         # 更新当前配置文件路径
                         if not self.current_config_file or self.current_config_file == default_path:
@@ -739,39 +740,36 @@ class App:
             messagebox.showerror("错误", f"读取配置文件失败：{str(e)}")
             return
         
-        cmd = ['uv', 'run', 'python', '-m', 'pytest']
+        # 导入对应的脚本模块
         if mode == 1:
-            cmd.append('./tests/test_main.py')
+            from scripts.main_script import main as script_main
+            script_name = "抢票"
         elif mode == 2:
-            cmd.append('./tests/test_login.py')
+            from scripts.login_script import main as script_main
+            script_name = "登录"
         elif mode == 3:
-            cmd.append('./tests/test_leftover.py')
-            
-        # 添加当前配置文件路径作为参数
-        cmd.append(f'--config={self.current_config_file}')
-            
-        if settings.get('viewable', 'yes').lower() == 'yes' and (mode == 1 or mode == 2):
-            cmd.append('--headed') 
+            from scripts.leftover_script import main as script_main
+            script_name = "余票查询"
         
-        logger.info(f"running command: {' '.join(cmd)}")
+        # 构造命令行参数
+        import sys
+        from unittest import mock
         
-        # 使用Popen执行命令并实时获取输出,run是阻塞的
-        process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            text=True,
-            bufsize=1  # 行缓冲
-        )
+        # 保存原始的sys.argv
+        original_argv = sys.argv.copy()
         
         try:
-            # 读取输出但不显示在GUI上
-            while process.poll() is None:
-                line = process.stdout.readline()
+            # 模拟命令行参数
+            sys.argv = ['script.py', f'--config={self.current_config_file}']
+            if settings.get('viewable', 'yes').lower() == 'yes' and (mode == 1 or mode == 2):
+                sys.argv.append('--headed')
             
-            # 获取命令执行结果
-            exit_code = process.returncode
+            logger.info(f"running {script_name} script with args: {sys.argv[1:]}")
             
-            # 判断抢票结果并显示相应的messagebox
+            # 调用脚本的main函数
+            exit_code = script_main()
+            
+            # 判断执行结果并显示相应的messagebox
             if mode == 1:  # 如果是完整预约模式
                 if exit_code == 0:
                     messagebox.showinfo("成功", "抢票成功！")
@@ -779,13 +777,11 @@ class App:
                     messagebox.showerror("失败", "抢票失败，请查看日志了解详情。")
             # 只登录模式不显示messagebox提示
         except Exception as e:
-            logger.error(f"{' '.join(cmd)} run error: {str(e)}")
-            messagebox.showerror("错误", f"运行脚本{' '.join(cmd)}失败：{str(e)}")
-            process.terminate()
-            process.kill()
+            logger.error(f"Error running {script_name} script: {str(e)}")
+            messagebox.showerror("错误", f"执行{script_name}脚本时出错：{str(e)}")
         finally:
-            # 确保资源被释放
-            process.stdout.close()
+            # 恢复原始的sys.argv
+            sys.argv = original_argv
             
             # 如果是查询模式，读取结果文件并显示
             if mode == 3:
