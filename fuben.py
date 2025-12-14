@@ -32,14 +32,13 @@ def check_configuration(config_path):
             "court": "out",
             "viewable": "yes",
             "wait_timeout_seconds": "2",
-            "count": 0,
-            "user": "user"
+            "count": 0
         }
         with open(config_path, 'w', encoding='utf-8') as f:
             json.dump(default_settings, f, indent=4)
         logger.info(f"Default config file created: {config_path}")
 
-def check_dependencies_4dev(config_path):
+def check_dependencies(config_path):
     """检查并安装依赖项"""
     with open(config_path, 'r') as f:
         settings = json.load(f)
@@ -119,61 +118,6 @@ def check_dependencies_4dev(config_path):
     
     logger.info("All dependencies installed successfully.")
 
-def check_dependencies_4user(config_path):
-    """用户模式下的依赖检查，使用pip管理依赖"""
-    with open(config_path, 'r') as f:
-        settings = json.load(f)
-    
-    # 首先判断count是否为4，如果是则跳过所有依赖项检查和安装
-    count = int(settings.get('count', 0))
-    if count == 4:
-        logger.info("All dependencies already installed (count=4), skipping all checks.")
-        return
-    
-    dependencies = [
-        "playwright>=1.52.0"
-    ]
-    
-    for dependency in dependencies:
-        try:
-            subprocess.run(['pip', 'install', dependency], check=True)
-            logger.info(f"Successfully installed {dependency}")
-        except Exception as e:
-            logger.error(f"Failed to install {dependency}: {e}")
-            sys.exit(1)
-    
-    logger.info("All dependencies installed successfully using pip")
-
-    # 检查并安装 playwright chromium
-    try:
-        # 尝试运行 playwright --version 来检查是否已安装
-        subprocess.run(['python', '-m', 'playwright', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        logger.info("playwright is already installed")
-        # 检查 chromium 是否已安装
-        result = subprocess.run(['python', '-m', 'playwright', 'install', 'chromium', '--dry-run'], 
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        if "already installed" in result.stdout or "already installed" in result.stderr:
-            logger.info("chromium is already installed")
-        else:
-            # 如果 chromium 未安装，则安装
-            subprocess.run(['python', '-m', 'playwright', 'install', 'chromium', '--with-deps'], check=True)
-            logger.info("chromium installed successfully")
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        # 如果 playwright 未安装，则安装
-        try:
-            subprocess.run(['python', '-m', 'playwright', 'install', 'chromium', '--with-deps'], check=True)
-            logger.info("playwright and chromium installed successfully")
-        except Exception as e:
-            logger.error(f"playwright installation failed: {e}")
-            sys.exit(1)
-    
-    # 更新配置文件中的count为4，表示所有依赖项都已安装
-    settings['count'] = 4
-    with open(config_path, 'w') as f:
-        json.dump(settings, f, indent=4)
-    
-    logger.info("All dependencies installed successfully.")
-
 def main():
     # Parse command-line arguments for configuration file path
     parser = argparse.ArgumentParser(description="Launch the application with a specified configuration file.")
@@ -186,16 +130,7 @@ def main():
     os.chdir(cur_path)
 
     check_configuration(config_path)
-    
-    # 读取配置文件，根据user字段决定执行哪个依赖检查函数
-    with open(config_path, 'r') as f:
-        settings = json.load(f)
-    
-    user_type = settings.get('user', 'user')
-    if user_type == 'dev':
-        check_dependencies_4dev(config_path)
-    else:
-        check_dependencies_4user(config_path)
+    check_dependencies(config_path)
 
     # 运行主程序
     try:
