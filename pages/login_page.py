@@ -2,6 +2,9 @@ from socket import timeout
 from playwright.sync_api import Page, expect
 import json
 import os
+import sys
+
+# 直接使用utils.logger，它会自动检测测试环境
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)

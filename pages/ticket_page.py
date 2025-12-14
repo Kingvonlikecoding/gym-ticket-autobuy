@@ -1,8 +1,10 @@
 from playwright.sync_api import Page, TimeoutError
 import random
 from datetime import date, timedelta
-from utils.logger import setup_logger
 from pages.pay_page import PayPage
+
+# 直接使用utils.logger，它会自动检测测试环境
+from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 

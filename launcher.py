@@ -13,6 +13,10 @@ def check_configuration(config_path):
     if config_dir:
         os.makedirs(config_dir, exist_ok=True)
     os.makedirs('report', exist_ok=True)
+    
+    # 创建测试相关目录
+    os.makedirs('tests/test_results', exist_ok=True)
+    os.makedirs('tests/test_logs', exist_ok=True)
     logger.info(f"Created necessary directories for config: {config_path}")
 
     # 创建默认配置文件
