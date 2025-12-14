@@ -32,14 +32,13 @@ def check_configuration(config_path):
             "court": "out",
             "viewable": "yes",
             "wait_timeout_seconds": "2",
-            "count": 0,
-            "user": "user"
+            "count": 0
         }
         with open(config_path, 'w', encoding='utf-8') as f:
             json.dump(default_settings, f, indent=4)
         logger.info(f"Default config file created: {config_path}")
 
-def check_dependencies_4dev(config_path):
+def check_dependencies(config_path):
     """检查并安装依赖项"""
     with open(config_path, 'r') as f:
         settings = json.load(f)
@@ -119,87 +118,6 @@ def check_dependencies_4dev(config_path):
     
     logger.info("All dependencies installed successfully.")
 
-def check_dependencies_4user(config_path):
-    """用户模式下的依赖检查，使用pip管理依赖，并使用镜像站加速安装"""
-    with open(config_path, 'r') as f:
-        settings = json.load(f)
-    
-    # 首先判断count是否为4，如果是则跳过所有依赖项检查和安装
-    count = int(settings.get('count', 0))
-    if count == 4:
-        logger.info("All dependencies already installed (count=4), skipping all checks.")
-        return
-    
-    # 定义依赖项和镜像站URL
-    dependencies = [
-        "playwright>=1.52.0"
-    ]
-    # 使用清华大学PyPI镜像站加速安装
-    mirror_url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-    mirror_option = ["-i", mirror_url, "--trusted-host", "pypi.tuna.tsinghua.edu.cn"]
-    
-    # 检查并安装依赖项
-    for dependency in dependencies:
-        try:
-            # 提取包名（去除版本要求）
-            package_name = dependency.split('>=')[0]
-            
-            # 检查包是否已安装且版本满足要求
-            result = subprocess.run(
-                [sys.executable, "-c", f"import {package_name}; print({package_name}.__version__)"]
-            )
-            
-            if result.returncode != 0:
-                # 包未安装，使用镜像站安装
-                logger.info(f"Installing {dependency} using mirror...")
-                subprocess.run(
-                    [sys.executable, "-m", "pip", "install", *mirror_option, dependency],
-                    check=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    text=True
-                )
-                logger.info(f"Successfully installed {dependency} using mirror")
-            else:
-                logger.info(f"{package_name} is already installed, skipping")
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to install {dependency} using mirror: {e.stdout}")
-            sys.exit(1)
-        except Exception as e:
-            logger.error(f"Unexpected error when installing {dependency}: {e}")
-            sys.exit(1)
-    
-    logger.info("All dependencies installed successfully using pip and mirror")
-
-    # 检查并安装 playwright chromium
-    try:
-        # 使用镜像站安装 playwright 浏览器
-        logger.info("Installing/Checking playwright browsers...")
-        
-        # 安装 chromium 浏览器，使用镜像站加速
-        subprocess.run(
-            [sys.executable, "-m", "playwright", "install", "chromium", "--with-deps", "--download-timeout=60000"],
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            env={**os.environ, "PLAYWRIGHT_DOWNLOAD_HOST": "https://npm.taobao.org/mirrors/playwright"}
-        )
-        logger.info("Playwright chromium installed successfully using mirror")
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Failed to install playwright chromium: {e.stdout}")
-        sys.exit(1)
-    except Exception as e:
-        logger.error(f"Unexpected error when installing playwright: {e}")
-        sys.exit(1)
-    
-    # 更新配置文件中的count为4，表示所有依赖项都已安装
-    settings['count'] = 4
-    with open(config_path, 'w') as f:
-        json.dump(settings, f, indent=4)
-    
-    logger.info("All dependencies installed successfully.")
-
 def main():
     # Parse command-line arguments for configuration file path
     parser = argparse.ArgumentParser(description="Launch the application with a specified configuration file.")
@@ -212,16 +130,7 @@ def main():
     os.chdir(cur_path)
 
     check_configuration(config_path)
-    
-    # 读取配置文件，根据user字段决定执行哪个依赖检查函数
-    with open(config_path, 'r') as f:
-        settings = json.load(f)
-    
-    user_type = settings.get('user', 'user')
-    if user_type == 'dev':
-        check_dependencies_4dev(config_path)
-    else:
-        check_dependencies_4user(config_path)
+    check_dependencies(config_path)
 
     # 运行主程序
     try:
