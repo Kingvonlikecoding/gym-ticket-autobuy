@@ -210,6 +210,8 @@ class App:
         # 每1秒检查一次
         self.root.after(1000, self.monitor_settings_json_changes)
     
+
+    
     def load_settings(self, file_path=None):
         """加载配置"""
         try:
@@ -619,13 +621,13 @@ class App:
         frame = ttk.Frame(left_frame)
         frame.grid(row=row, column=0, sticky='ew', pady=2)
         ttk.Label(frame, text="场馆类型", width=10).pack(side='left', padx=(0, 5))
-        venue_combobox = ttk.Combobox(frame, width=18, values=["A - 健身房", "B - 羽毛球场", "C - 篮球场"])
-        venue_combobox.pack(side='left', padx=5)
-        self.settings_entries["venue"] = venue_combobox
+        self.venue_combobox = ttk.Combobox(frame, width=18, values=["A - 健身房", "B - 羽毛球场", "C - 篮球场"])
+        self.venue_combobox.pack(side='left', padx=5)
+        self.settings_entries["venue"] = self.venue_combobox
         ttk.Label(frame, text="(选择场馆类型)").pack(side='left', padx=5)
         row += 1
         
-        # 场地选择下拉框（默认隐藏）
+        # 场地选择下拉框
         self.court_frame = ttk.Frame(left_frame)
         self.court_frame.grid(row=row, column=0, sticky='ew', pady=2)
         ttk.Label(self.court_frame, text="场地选择", width=10).pack(side='left', padx=(0, 5))
@@ -633,19 +635,9 @@ class App:
         court_combobox.pack(side='left', padx=5)
         self.settings_entries["court"] = court_combobox
         ttk.Label(self.court_frame, text="(选择场地类型)").pack(side='left', padx=5)
-        self.court_frame.grid_remove()  # 默认隐藏
         
         # 添加场馆类型选择事件监听器
-        def on_venue_change(event):
-            selected_venue = venue_combobox.get()
-            if selected_venue == "C - 篮球场":
-                self.court_frame.grid()  # 显示场地选择框
-            else:
-                self.court_frame.grid_remove()  # 隐藏场地选择框
-                # 清除场地选择
-                court_combobox.set("")
-        
-        venue_combobox.bind("<<ComboboxSelected>>", on_venue_change)
+        # 场馆选择变化时不需要特殊处理，场地选择框将始终显示
 
         # 高级选项输入框
         adsettings={
