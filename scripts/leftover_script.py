@@ -30,14 +30,17 @@ def main():
     with sync_playwright() as p:
         # 启动浏览器
         browser = p.chromium.launch(headless=not args.headed)
-        
+
         # 创建页面
         page = browser.new_page()
         
         try:
             # 登录
             login_page = LoginPage(page)
-            login_page.login(cfg['username'], cfg['password'])
+            login_success, login_msg = login_page.login(cfg['username'], cfg['password'])
+            if not login_success:
+                logger.info(f"登录失败: {login_msg}")
+                return 1, login_msg
 
             # 查询余票
             ticket_page = TicketPage(page)
@@ -57,11 +60,11 @@ def main():
                 json.dump(leftover_timeslots, f)
             
             logger.info(f"查询到的余票时间段: {leftover_timeslots}")
-            return 0
+            return 0, "查询成功"
             
         except Exception as e:
             logger.error(f"查询余票失败: {str(e)}")
-            return 1
+            return 1, f"查询失败: {str(e)}"
         finally:
             # 关闭浏览器
             browser.close()

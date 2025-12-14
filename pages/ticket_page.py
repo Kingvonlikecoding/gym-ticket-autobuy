@@ -79,6 +79,7 @@ class TicketPage:
 
     def leftover_timeslot(self):
         """查询当日有票的时间段"""
+        self.page.wait_for_timeout(300)
         available_timeslots = self.page.locator("div.element:has-text('可预约')").all()
         visible_timeslots = [t for t in available_timeslots if t.is_visible()]
         if not visible_timeslots:
@@ -146,13 +147,13 @@ class TicketPage:
 
     def verify_payment_success(self):
         """验证支付成功"""
-        target_td = self.page.wait_for_selector(
-            "tbody tr:first-child td:first-child", 
-            state="visible",  # 确保元素可见
-            timeout=10000
-        )
-
-        a_tags = target_td.locator("a")
+        # 直接使用Locator API查找所有a标签，避免ElementHandle和Locator混用
+        a_tags = self.page.locator("tbody tr:first-child td:first-child a")
+        
+        # 等待元素可见
+        a_tags.first.wait_for(state="visible", timeout=10000)
+        
+        # 获取a标签数量
         a_count = a_tags.count()
         
         # 判断是否恰好有2个a标签

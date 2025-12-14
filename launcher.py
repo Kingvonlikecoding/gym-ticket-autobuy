@@ -134,13 +134,19 @@ def main():
 
     # 运行主程序
     try:
-        from main import launch_app
-        launch_app(config_path=config_path)
-    except ImportError as e:
-        logger.error(f"Error importing launch_app: {e}")
+        # 使用虚拟环境中的Python解释器运行main.py
+        python_exe = os.path.join('.venv', 'Scripts', 'python.exe')
+        if not os.path.exists(python_exe):
+            logger.error(f"Virtual environment Python interpreter not found at {python_exe}")
+            sys.exit(1)
+        
+        # 运行main.py，传递配置文件路径
+        subprocess.run([python_exe, '-m', 'main', f'--config={config_path}'], check=True)
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error running main.py: {e}")
         sys.exit(1)
     except Exception as e:
-        logger.error(f"Error running launch_app: {e}")
+        logger.error(f"Unexpected error running main.py: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

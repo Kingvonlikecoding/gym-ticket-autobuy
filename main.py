@@ -216,9 +216,7 @@ class App:
         
         # 每1秒检查一次
         self.root.after(1000, self.monitor_settings_json_changes)
-    
-
-    
+      
     def load_settings(self, file_path=None):
         """加载配置"""
         try:
@@ -771,25 +769,41 @@ class App:
             logger.info(f"running {script_name} script with args: {sys.argv[1:]}")
             
             # 调用脚本的main函数
-            exit_code = script_main()
+            result = script_main()
+            
+            # 处理返回结果
+            if isinstance(result, tuple):
+                exit_code, message = result
+            else:
+                # 兼容旧版本返回值格式
+                exit_code = result
+                message = "执行成功" if exit_code == 0 else f"{script_name}执行出错"
             
             # 判断执行结果并显示相应的messagebox
             if mode == 1:  # 如果是完整预约模式
                 if exit_code == 0:
                     messagebox.showinfo("成功", "抢票成功！")
                 else:
-                    messagebox.showerror("失败", "抢票失败，请查看日志了解详情。")
+                    messagebox.showerror("失败", f"抢票失败：{message}")
+            elif mode == 3:  # 如果是余票查询模式
+                if exit_code == 0:
+                    # 只有查询成功时才显示结果
+                    self.display_leftover_timeslots()
+                else:
+                    # 查询失败时直接显示详细错误信息
+                    self.leftover_textbox.delete(1.0, tk.END)
+                    self.leftover_textbox.insert(tk.END, f"查询失败：{message}")
             # 只登录模式不显示messagebox提示
         except Exception as e:
             logger.error(f"Error running {script_name} script: {str(e)}")
             messagebox.showerror("错误", f"执行{script_name}脚本时出错：{str(e)}")
+            # 如果是查询模式，清空文本框并显示错误信息
+            if mode == 3:
+                self.leftover_textbox.delete(1.0, tk.END)
+                self.leftover_textbox.insert(tk.END, f"查询失败：{str(e)}")
         finally:
             # 恢复原始的sys.argv
             sys.argv = original_argv
-            
-            # 如果是查询模式，读取结果文件并显示
-            if mode == 3:
-                self.display_leftover_timeslots()
     
     def setup_instructions_section(self, parent_frame):
         """合并显示注意事项、官网链接和高级设置说明"""
@@ -805,9 +819,9 @@ class App:
         note_frame.pack(fill='x', pady=(0, 5))
         ttk.Label(note_frame, text="注意事项", font=('Helvetica', 10, 'bold')).pack(anchor='w', pady=(0, 5))
         note_text = """
-1. 所有修改都会自动保存
-2. 所有信息都会保存在本地settings_学号.json文件中，不会上传到网络，请勿分享此文件
-3. 详细说明请查看README.md文件  
+        1. 所有修改都会自动保存
+        2. 所有信息都会保存在本地settings_学号.json文件中，不会上传到网络，请勿分享此文件
+        3. 详细说明请查看README.md文件  
         """
         ttk.Label(note_frame, text=note_text, justify='left').pack(anchor='w')
         
@@ -884,7 +898,15 @@ def launch_app(config_path=None):
     root.mainloop()
 
 if __name__ == "__main__":
+    import argparse
     from pathlib import Path
     cur_path = Path(__file__).parent
     os.chdir(cur_path)
-    launch_app()
+    
+    # 解析命令行参数
+    parser = argparse.ArgumentParser(description="体育馆预约助手")
+    parser.add_argument('--config', type=str, help="配置文件路径")
+    args = parser.parse_args()
+    
+    # 启动应用并传递配置文件路径
+    launch_app(args.config)

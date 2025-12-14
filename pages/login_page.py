@@ -82,20 +82,24 @@ class LoginPage:
         """检查是否已登录"""
         try:
             # 检查是否存在登录后才会出现的元素（粤海校区按钮）
-            expect(self.yuehai_button).to_be_visible(timeout=5000)
+            expect(self.yuehai_button).to_be_visible(timeout=3000)
             return True
         except:
             logger.error("can't find yuehai button, login failed")
             return False
 
     def login(self, username: str, password: str):
-        """执行登录操作，支持cookie登录"""
+        """执行登录操作，支持cookie登录
+        
+        Returns:
+            tuple: (success, message) - success为True表示登录成功，message为成功或失败的详细信息
+        """
         
         if self.load_cookies():
             self.navigate()
             
             if self.is_logged_in():
-                return self
+                return True, "Cookie登录成功"
 
         # Cookie登录失败，使用账号密码登录
         logger.info("can't  load cookies, try to login with username and password")
@@ -115,8 +119,9 @@ class LoginPage:
         if self.is_logged_in():
             self.save_cookies()
             logger.info("login success, system have saved cookies")
-            return True
+            return True, "账号密码登录成功"
         else:
             logger.error("failed to login")
-            return False
+            return False, "登录失败：可能是账号或密码错误"
+
         
