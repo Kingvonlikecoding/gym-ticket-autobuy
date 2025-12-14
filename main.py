@@ -120,7 +120,6 @@ class App:
     def load_default_settings(self):
         """加载默认配置"""
         try:
-            # 获取上一次使用的配置文件路径
             last_used_config = self.get_last_used_config_path()
             default_path = os.path.join('config', 'settings.json')
             
@@ -129,50 +128,40 @@ class App:
                 logger.info(f"Using last used config: {last_used_config}")
                 self.sync_settings_files(last_used_config, default_path)
             
-            # 首先检查是否存在默认的settings.json文件
+            # 检查默认配置文件是否存在且有效
             if os.path.exists(default_path):
                 try:
-                    # 读取默认配置
                     with open(default_path, 'r', encoding='utf-8') as f:
                         settings = json.load(f)
                     
-                    # 如果有用户名，创建对应的settings_学号.json文件
-                    if 'username' in settings and settings['username']:
-                        username = settings['username'].strip()
-                        if username:
-                            new_path = self.get_config_file_path(username)
+                    # 获取用户名并检查是否有效
+                    username = settings.get('username', '').strip()
+                    if username:
+                        # 创建用户专用配置文件
+                        new_path = self.get_config_file_path(username)
+                        os.makedirs('config', exist_ok=True)
+                        
+                        try:
+                            with open(new_path, 'w', encoding='utf-8') as f:
+                                json.dump(settings, f, indent=4)
                             
-                            # 创建新的配置文件并与settings.json同步
-                            os.makedirs('config', exist_ok=True)
-                            try:
-                                with open(new_path, 'w', encoding='utf-8') as f:
-                                    json.dump(settings, f, indent=4)
-                                
-                                logger.info(f"Created new config file: {new_path}")
-                                
-                                # 加载新创建的配置文件
-                                self.load_settings(new_path)
-                                return
-                            except (PermissionError, IOError) as e:
-                                logger.error(f"Failed to create new config file: {str(e)}")
-                                # 如果创建新文件失败，尝试加载默认配置
-                                self.load_settings(default_path)
-                                return
-                        else:
-                            # 如果用户名为空，加载默认配置
+                            logger.info(f"Created new config file: {new_path}")
+                            self.load_settings(new_path)
+                            return
+                        except (PermissionError, IOError) as e:
+                            logger.error(f"Failed to create new config file: {str(e)}")
+                            # 创建失败时加载默认配置
                             self.load_settings(default_path)
                             return
                     else:
-                        # 如果没有用户名，加载默认配置
+                        # 无有效用户名时加载默认配置
                         self.load_settings(default_path)
                         return
                 except json.JSONDecodeError:
                     logger.error(f"Default config file is invalid JSON: {default_path}")
-                    # 如果默认配置文件格式错误，初始化空配置
-                    self.load_settings()
-            else:
-                # 如果默认配置文件不存在，初始化空配置
-                self.load_settings()
+                    # 配置文件无效时初始化空配置
+            # 配置文件不存在或无效时初始化空配置
+            self.load_settings()
         except Exception as e:
             logger.error(f"Error handling default config: {str(e)}")
             # 确保在任何错误情况下都有一个可用的配置状态
@@ -186,24 +175,23 @@ class App:
                 with open(default_path, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                 
-                # 检查是否有用户名
-                if 'username' in settings and settings['username']:
-                    username = settings['username'].strip()
-                    if username:
-                        # 同步到对应学号的配置文件
-                        user_config_path = self.get_config_file_path(username)
-                        self.sync_settings_files(default_path, user_config_path)
-                        logger.debug(f"Synced settings.json to {user_config_path} based on username: {username}")
-                        
-                        # 更新当前配置文件路径
-                        if not self.current_config_file or self.current_config_file == default_path:
-                            self.current_config_file = user_config_path
-                            # 保存上一次使用的配置文件路径
-                            self.save_last_used_config_path(user_config_path)
-                            # 更新界面显示
-                            if hasattr(self, 'current_config_label'):
-                                file_name = os.path.basename(self.current_config_file)
-                                self.current_config_label.config(text=f"当前配置文件：{file_name}")
+                # 检查是否有有效的用户名
+                username = settings.get('username', '').strip()
+                if username:
+                    # 同步到对应学号的配置文件
+                    user_config_path = self.get_config_file_path(username)
+                    self.sync_settings_files(default_path, user_config_path)
+                    logger.debug(f"Synced settings.json to {user_config_path} based on username: {username}")
+                    
+                    # 更新当前配置文件路径
+                    if not self.current_config_file or self.current_config_file == default_path:
+                        self.current_config_file = user_config_path
+                        # 保存上一次使用的配置文件路径
+                        self.save_last_used_config_path(user_config_path)
+                        # 更新界面显示
+                        if hasattr(self, 'current_config_label'):
+                            file_name = os.path.basename(self.current_config_file)
+                            self.current_config_label.config(text=f"当前配置文件：{file_name}")
         except Exception as e:
             logger.error(f"Failed to monitor settings.json changes: {str(e)}")
         
@@ -349,7 +337,6 @@ class App:
             logger.info(f"account saved to {new_config_path}")
         except Exception as e:
             logger.error(f"failed to save account: {str(e)}")
-            logger.error(f"failed to save account automatically: {str(e)}")
 
     def auto_save_account_on_key(self, event=None):
         """在按键释放时自动保存账号信息"""
@@ -424,7 +411,6 @@ class App:
             
         except Exception as e:
             logger.error(f"failed to save appointment settings: {str(e)}")
-            logger.error(f"failed to save settings automatically: {str(e)}")
 
     def auto_save_settings_on_key(self, event=None):
         """在按键释放时自动保存预约设置"""
@@ -733,19 +719,26 @@ class App:
             return
         
         # 导入对应的脚本模块
-        if mode == 1:
-            from scripts.main_script import main as script_main
-            script_name = "抢票"
-        elif mode == 2:
-            from scripts.login_script import main as script_main
-            script_name = "登录"
-        elif mode == 3:
-            from scripts.leftover_script import main as script_main
-            script_name = "余票查询"
+        script_map = {
+            1: ("scripts.main_script", "抢票"),
+            2: ("scripts.login_script", "登录"),
+            3: ("scripts.leftover_script", "余票查询")
+        }
         
-        # 构造命令行参数
-        import sys
-        from unittest import mock
+        module_name, script_name = script_map.get(mode, (None, "未知"))
+        if not module_name:
+            messagebox.showerror("错误", f"无效的模式: {mode}")
+            return
+        
+        # 动态导入脚本模块
+        try:
+            import importlib
+            module = importlib.import_module(module_name)
+            script_main = module.main
+        except ImportError as e:
+            logger.error(f"Error importing {module_name}: {str(e)}")
+            messagebox.showerror("错误", f"导入脚本模块失败：{str(e)}")
+            return
         
         # 保存原始的sys.argv
         original_argv = sys.argv.copy()

@@ -40,7 +40,7 @@ def main():
                 # 登录成功，保持浏览器打开
                 try:
                     while True:
-                        time.sleep(3)
+                        time.sleep(1)
                         page.title()
                 except Exception as e:
                     logger.info(f"浏览器已关闭: {str(e)}")
