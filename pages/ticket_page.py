@@ -141,23 +141,6 @@ class TicketPage:
                 .click_next_step() 
                 .enter_password(pay_password)
             )
-            return
+            return True
 
         return self
-
-    def verify_payment_success(self):
-        """验证支付成功"""
-        # 直接使用Locator API查找所有a标签，避免ElementHandle和Locator混用
-        a_tags = self.page.locator("tbody tr:first-child td:first-child a")
-        
-        # 等待元素可见
-        a_tags.first.wait_for(state="visible", timeout=10000)
-        
-        # 获取a标签数量
-        a_count = a_tags.count()
-        
-        # 判断是否恰好有2个a标签
-        if a_count == 2:
-            logger.info("Payment verified successfully, 订单支付成功 !!!")
-        else:
-            logger.error("Payment verification failed, 订单支付失败 !!!")

@@ -42,7 +42,7 @@ def main():
             # 预订场地
             ticket_page = TicketPage(page)
             # 使用括号 ( ... ) 可以让整个表达式自动支持换行
-            (ticket_page
+            if_sc=(ticket_page
                 .select_campus()
                 .select_venue(cfg['venue'])
                 .select_date(cfg['date'], cfg['venue'], wait_timeout_seconds=float(cfg['wait_timeout_seconds']))
@@ -50,11 +50,11 @@ def main():
                 .select_specific_venue(cfg['venue'], cfg.get('court'))
                 .submit_booking()
                 .make_payment(cfg['pay_pass'])
-                .verify_payment_success()
             )
             
-            logger.info("抢票成功！")
-            return 0
+            if if_sc:
+                logger.info("抢票成功！")
+                return 0
             
         except Exception as e:
             logger.error(f"抢票失败: {str(e)}")
