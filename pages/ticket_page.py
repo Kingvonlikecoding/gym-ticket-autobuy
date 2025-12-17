@@ -37,7 +37,6 @@ class TicketPage:
         """选择日期（今天或明天）"""
         today = date.today().strftime("%Y-%m-%d")
         tomorrow = (date.today() + timedelta(days=1)).strftime("%Y-%m-%d")
-        dajiba= (date.today() + timedelta(days=2)).strftime("%Y-%m-%d") # 用来测试
         if da_te=='today':
             da_te = today
         elif da_te=='tomorrow':
@@ -76,6 +75,34 @@ class TicketPage:
         except TimeoutError:
             logger.error(f"Failed to select time slot: {time_slot}")
         return self
+
+    def select_time_slot_loop(self, time_slot: str, da_te: str, venue_type: str, wait_timeout_seconds: float):
+        """选择时间段（循环尝试）"""
+        max_attempts = 100
+        for attempt in range(max_attempts):
+            if attempt > 0:
+                self.page.reload()
+                self.page.wait_for_load_state('networkidle')
+                self.page.wait_for_load_state('domcontentloaded')
+                self.page.wait_for_load_state('load')
+                self.select_campus()
+                self.select_venue(venue_type)
+                self.select_date(da_te, venue_type, wait_timeout_seconds)
+            try:
+                time_locator = self.page.locator(f"div.element:has-text('{time_slot}(可预约)')")
+                time_locator.wait_for(state='visible', timeout=wait_timeout_seconds * 1000)
+                time_locator.click()
+                logger.info(f"Successfully selected time slot: {time_slot}")
+                return self
+            except TimeoutError:
+                if attempt >= max_attempts - 1:
+                    logger.error(f"Failed to select time slot: {time_slot} after {max_attempts} attempts.")
+                    raise RuntimeError(f"Failed to select time slot: {time_slot} after {max_attempts} attempts.")
+                else:
+                    logger.info(f"Failed to select time slot: {time_slot}, retrying...")
+        return self
+
+
 
     def leftover_timeslot(self):
         """查询当日有票的时间段"""

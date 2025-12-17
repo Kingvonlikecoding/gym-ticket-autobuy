@@ -46,7 +46,7 @@ def main():
                 .select_campus()
                 .select_venue(cfg['venue'])
                 .select_date(cfg['date'], cfg['venue'], wait_timeout_seconds=float(cfg['wait_timeout_seconds']))
-                .select_time_slot(cfg['time_slot'])
+                .select_time_slot_loop(cfg['time_slot'], cfg['date'], cfg['venue'], wait_timeout_seconds=float(cfg['wait_timeout_seconds']))
                 .select_specific_venue(cfg['venue'], cfg.get('court'))
                 .submit_booking()
                 .make_payment(cfg['pay_pass'])

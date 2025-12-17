@@ -737,9 +737,9 @@ class App:
         
         # 导入对应的脚本模块
         script_map = {
-            1: ("scripts.main_script", "抢票"),
+            1: ("scripts.loop_script", "抢票"),
             2: ("scripts.login_script", "登录"),
-            3: ("scripts.leftover_script", "余票查询")
+            3: ("scripts.leftover_script", "余票查询"),
         }
         
         module_name, script_name = script_map.get(mode, (None, "未知"))
