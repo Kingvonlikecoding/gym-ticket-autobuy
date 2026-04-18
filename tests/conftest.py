@@ -3,6 +3,7 @@ import json
 import os
 import sys
 from playwright.sync_api import sync_playwright, Playwright
+from utils.browser_launcher import launch_browser
 
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -25,9 +26,10 @@ def browser(playwright_instance: Playwright, pytestconfig):
     # 检查是否有--headed参数，如果有则使用headless=False
     headless = not pytestconfig.getoption("headed")
     
-    browser = playwright_instance.chromium.launch(
+    browser = launch_browser(
+        playwright_instance,
         headless=headless,  # 根据命令行参数决定是否使用无头模式
-        slow_mo=500         # 慢速执行，便于观察
+        slow_mo=500,        # 慢速执行，便于观察
     )
     yield browser
     browser.close()

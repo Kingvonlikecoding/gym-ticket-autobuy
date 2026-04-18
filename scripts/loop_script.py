@@ -9,6 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from playwright.sync_api import sync_playwright, Playwright
 from utils.logger import setup_logger
+from utils.browser_launcher import launch_browser
 
 from pages.login_page import LoginPage
 from pages.ticket_page import TicketPage
@@ -29,7 +30,7 @@ def main():
     # 创建Playwright实例
     with sync_playwright() as p:
         # 启动浏览器
-        browser = p.chromium.launch(headless=not args.headed)
+        browser = launch_browser(p, headless=not args.headed)
         
         # 创建页面
         page = browser.new_page()

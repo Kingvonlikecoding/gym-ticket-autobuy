@@ -27,7 +27,7 @@ def test_main_flow_success(page, test_config):
         .select_campus()
         .select_venue(test_config['venue'])
         .select_date(test_config['date'], test_config['venue'], wait_timeout_seconds=float(test_config['wait_timeout_seconds']))
-        .select_time_slot(test_config['time_slot'])
+        .select_time_slot_loop(cfg['time_slot'], cfg['date'], cfg['venue'], wait_timeout_seconds=float(cfg['wait_timeout_seconds']))
         .select_specific_venue(test_config['venue'], test_config.get('court'))
         .submit_booking()
         # 实际支付可能需要真实支付环境，这里仅验证到提交预订步骤

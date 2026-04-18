@@ -88,28 +88,15 @@ def check_dependencies(config_path):
         logger.error(f"uv sync failed: {e}")
         sys.exit(1)
 
-    # 检查并安装 playwright chromium
+    # 检查 playwright CLI 是否可用（不强制下载浏览器）
     try:
         # 尝试运行 playwright --version 来检查是否已安装
         subprocess.run(['uv', 'run', 'playwright', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         logger.info("playwright is already installed")
-        # 检查 chromium 是否已安装
-        result = subprocess.run(['uv', 'run', 'playwright', 'install', 'chromium', '--dry-run'], 
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        if "already installed" in result.stdout or "already installed" in result.stderr:
-            logger.info("chromium is already installed")
-        else:
-            # 如果 chromium 未安装，则安装
-            subprocess.run(['uv', 'run', 'playwright', 'install', 'chromium', '--with-deps'], check=True)
-            logger.info("chromium installed successfully")
+        logger.info("Skipping bundled browser installation; will use system browser channels first")
     except (subprocess.CalledProcessError, FileNotFoundError):
-        # 如果 playwright 未安装，则安装
-        try:
-            subprocess.run(['uv', 'run', 'playwright', 'install', 'chromium', '--with-deps'], check=True)
-            logger.info("playwright and chromium installed successfully")
-        except Exception as e:
-            logger.error(f"playwright installation failed: {e}")
-            sys.exit(1)
+        logger.error("playwright CLI is unavailable after dependency sync")
+        sys.exit(1)
     
     # 更新配置文件中的count为4，表示所有依赖项都已安装
     settings['count'] = 4
